@@ -7,7 +7,7 @@ as well as links to selected libraries hosted and maintained elsewhere.
 
 For more details and the latest source code, see
 
-  http://code.google.com/p/plsql-utils/
+  http://github.com/mortenbra/alexandria-plsql-utils
 
 Also check out the "demos" folder for some examples.
 
