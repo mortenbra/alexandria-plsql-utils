@@ -1,0 +1,33 @@
+
+Version 1.7.0
+=============
+- Split installation script into various modules (core, xml, amazon, microsoft, etc.)
+- Added icalendar_util_pkg (based on sample code by Dan McGhan and others)
+- Added image_util_pkg (based on image parsing code in Anton Scheffer's AS_PDF3 package)
+- Added uri_template_util_pkg
+- Major enhancements to amazon_aws_s3_pkg (thanks to Jeffrey Kemp, see http://code.google.com/p/plsql-utils/issues/detail?id=14 ++)
+- Minor enhancements to datapump_util_pkg
+- Minor enhancements to datapump_cloud_pkg
+- Minor enhancements to date_util_pkg
+- Minor enhancements to owa_util_pkg
+- Minor enhancements to string_util_pkg
+- Bug fix for csv_util_pkg, see http://code.google.com/p/plsql-utils/issues/detail?id=13
+
+Version 1.6.0
+=============
+
+- Added as_pdf3 (by Anton Scheffer, see /extras)
+- Added datapump_util_pkg
+- Added datapump_cloud_pkg (see /demos)
+- Added flex_ws_api (by Jason Straub)
+- Added ms_ews_util_pkg
+- Added validation_util_pkg
+- Added web_util_pkg
+- Minor enhancements to ooxml_util_pkg
+- Minor enhancements to owa_util_pkg
+- Minor enhancements to rss_util_pkg
+- Minor enhancements to string_util_pkg
+- Minor enhancements to utl_file_nonstandard (see /extras)
+- Bug fixes for date_util_pkg
+- Bug fixes for zip_util_pkg
+
