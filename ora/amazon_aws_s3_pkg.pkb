@@ -19,7 +19,11 @@ as
   g_aws_namespace_s3       constant varchar2(255) := 'http://s3.amazonaws.com/doc/2006-03-01/';
   g_aws_namespace_s3_full  constant varchar2(255) := 'xmlns="' || g_aws_namespace_s3 || '"';
 
-  g_date_format_xml        constant varchar2(30) := 'YYYY-MM-DD"T"HH24:MI:SS".000Z"';
+  g_date_format_xml        constant varchar2(30)  := 'YYYY-MM-DD"T"HH24:MI:SS".000Z"';
+
+  g_use_https              constant BOOLEAN       := TRUE;
+  g_wallet_path            constant varchar2(400) := '';
+  g_wallet_password        constant varchar2(400) := '';
 
 
 procedure raise_error (p_error_message in varchar2)
@@ -174,6 +178,17 @@ begin
   
   debug_pkg.printf('%1 %2', p_http_method, p_url);
 
+  if g_use_https then
+    if g_wallet_path IS NULL or g_wallet_password IS NULL then
+      raise_error('To use HTTPS, you must create a wallet and import the trusted certificates from Amazon, and set the path and password in g_Wallet_path and g_wallet_password respectively.');
+    end if;
+
+    utl_http.set_wallet(
+      path     => g_wallet_path
+    , password => g_wallet_password
+    );
+  end if;
+
   l_http_req := utl_http.begin_request(p_url, p_http_method);
   
   if p_header_names.count > 0 then
@@ -255,7 +270,7 @@ begin
   
   */
 
-  l_returnvalue := 'http://' || p_bucket_name || '.' || g_aws_host_s3 || '/' || p_key;
+  l_returnvalue := 'http' || case when g_use_https then 's' end || '://' || p_bucket_name || '.' || g_aws_host_s3 || '/' || p_key;
   
   return l_returnvalue;
   
@@ -1200,6 +1215,18 @@ begin
 
 end set_object_acl;
 
+
+procedure set_wallet_path(p_wallet_path in varchar2)
+as
+begin
+  g_wallet_path := p_wallet_path;
+end set_wallet_path;
+
+procedure set_wallet_password(p_wallet_password in varchar2)
+as
+begin
+  g_wallet_password := p_wallet_password;
+end set_wallet_password;
 
 end amazon_aws_s3_pkg;
 /

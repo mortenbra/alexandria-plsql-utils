@@ -139,6 +139,10 @@ as
                             p_key in varchar2,
                             p_acl in varchar2);
 
+  --modify the wallet properties
+  procedure set_wallet_path(p_wallet_path in varchar2);
+  procedure set_wallet_password(p_wallet_password in varchar2);
+
 end amazon_aws_s3_pkg;
 /
 
