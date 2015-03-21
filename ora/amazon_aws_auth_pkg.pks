@@ -37,13 +37,9 @@ as
   -- set AWS secret key
   procedure set_aws_key (p_aws_key in varchar2);
 
-  -- set GMT offset
-  procedure set_gmt_offset (p_gmt_offset in number);
-
   -- initialize package for use
   procedure init (p_aws_id in varchar2,
-                  p_aws_key in varchar2,
-                  p_gmt_offset in number := null);
+                  p_aws_key in varchar2);
 
 end amazon_aws_auth_pkg;
 /

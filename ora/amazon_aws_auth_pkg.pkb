@@ -17,9 +17,6 @@ as
   g_aws_id                 varchar2(20) := 'my_aws_id'; -- AWS access key ID
   g_aws_key                varchar2(40) := 'my_aws_key'; -- AWS secret key
 
-  g_gmt_offset             number := 0; -- your timezone GMT adjustment 
-
-
 function get_auth_string (p_string in varchar2) return varchar2
 as
  l_returnvalue      varchar2(32000);
@@ -100,6 +97,8 @@ end get_aws_id;
 function get_date_string (p_date in date := sysdate) return varchar2
 as
   l_returnvalue varchar2(255);
+  l_date_as_time timestamp(6);
+  l_time_utc timestamp(6);
 begin
 
   /*
@@ -114,7 +113,9 @@ begin
   
   */
   
-  l_returnvalue := to_char(p_date + g_gmt_offset/24, 'Dy, DD Mon YYYY HH24:MI:SS', 'NLS_DATE_LANGUAGE = AMERICAN') || ' GMT'; 
+  l_date_as_time := cast(p_date as timestamp);
+  l_time_utc := sys_extract_utc(l_date_as_time);
+  l_returnvalue := to_char(l_time_utc, 'Dy, DD Mon YYYY HH24:MI:SS', 'NLS_DATE_LANGUAGE = AMERICAN') || ' GMT';
 
   return l_returnvalue;
 
@@ -187,31 +188,8 @@ begin
 
 end set_aws_key;
 
-
-procedure set_gmt_offset (p_gmt_offset in number)
-as
-begin
-
-  /*
-
-  Purpose:   set GMT offset
-
-  Remarks:   
-
-  Who     Date        Description
-  ------  ----------  -------------------------------------
-  MBR     03.03.2011  Created
-  
-  */
-  
-  g_gmt_offset := p_gmt_offset;
-
-end set_gmt_offset;
-
-
 procedure init (p_aws_id in varchar2,
-                p_aws_key in varchar2,
-                p_gmt_offset in number)
+                p_aws_key in varchar2)
 as
 begin
 
@@ -229,7 +207,6 @@ begin
 
   g_aws_id := p_aws_id;
   g_aws_key := p_aws_key;
-  g_gmt_offset := nvl(p_gmt_offset, g_gmt_offset);
 
 end init;
 
