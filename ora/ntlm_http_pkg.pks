@@ -17,6 +17,14 @@ as
  
   */
   
+  -- get blob from url
+  function get_response_blob (p_url in varchar2,
+                              p_username in varchar2,
+                              p_password in varchar2,
+                              p_wallet_path in varchar2 := null,
+                              p_wallet_password in varchar2 := null,
+                              p_proxy_server in varchar2 := null) return blob;
+							  
   -- get clob from url
   function get_response_clob (p_url in varchar2,
                               p_username in varchar2,
@@ -39,4 +47,3 @@ as
 
 end ntlm_http_pkg;
 /
-
