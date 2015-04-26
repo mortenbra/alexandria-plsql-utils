@@ -122,6 +122,8 @@ begin
   if p_table_data_only then
     dbms_datapump.metadata_filter (l_job_handle, 'INCLUDE_PATH_LIST', '''TABLE'''); -- note the double quotes
     -- TODO: investigate the "TABLE_EXISTS_ACTION" parameter
+    -- not sure what the context was for the TODO, but we use it to clear down tables before importing data.
+    -- Usage is dbms_datapump.set_parameter(l_job_handle, 'TABLE_EXISTS_ACTION', 'TRUNCATE');
   end if;
   
   dbms_datapump.start_job (l_job_handle);
