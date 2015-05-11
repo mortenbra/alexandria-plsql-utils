@@ -549,6 +549,19 @@ as
     return 's="' || t_XfId || '"';
   end;
 --
+  function clean_string (p_string in varchar2)
+  return varchar2
+  is
+    invalid_ascii constant varchar2(32) :=
+      chr(00)||chr(01)||chr(02)||chr(03)||chr(04)||chr(05)||chr(06)||chr(07)||
+      chr(08)||                  chr(11)||chr(12)||         chr(14)||chr(15)||
+      chr(16)||chr(17)||chr(18)||chr(19)||chr(20)||chr(21)||chr(22)||chr(23)||
+      chr(24)||chr(25)||chr(26)||chr(27)||chr(28)||chr(29)||chr(30)||chr(31)
+    ;
+  begin
+    return translate(translate( p_string, invalid_ascii, chr(1)), chr(0)||chr(1), ' ');
+  end;
+--
   procedure cell
     ( p_col pls_integer
     , p_row pls_integer
@@ -584,7 +597,7 @@ as
     t_alignment tp_alignment := p_alignment;
   begin
     workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := workbook.strings.count();
-    workbook.strings( workbook.strings.count() ) := p_value;
+    workbook.strings( workbook.strings.count() ) := clean_string( p_value );
     if t_alignment.wrapText is null and instr( p_value, chr(13) ) > 0
     then
       t_alignment.wrapText := true;
@@ -633,7 +646,7 @@ as
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
     workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := workbook.strings.count();
-    workbook.strings( workbook.strings.count() ) := nvl( p_value, p_url );
+    workbook.strings( workbook.strings.count() ) := clean_string( nvl( p_value, p_url ) );
     workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, '', get_font( 'Calibri', p_theme => 10, p_underline => true ) );
     t_ind := workbook.sheets( t_sheet ).hyperlinks.count() + 1;
     workbook.sheets( t_sheet ).hyperlinks( t_ind ).cell := alfan_col( p_col ) || p_row;
