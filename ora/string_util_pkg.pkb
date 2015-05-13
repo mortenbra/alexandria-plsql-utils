@@ -716,10 +716,11 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     06.01.2009  Created
+  MJH     12.05.2015  Leverage string_util_pkg.str_to_bool in order to reduce code redundancy
   
   */
   
-  if lower(p_str) in ('y', 'yes', 'true', '1') then
+  if str_to_bool(p_str) then
     l_returnvalue := g_yes;
   end if;
   
