@@ -92,6 +92,9 @@ as
   -- remove all non-alpha characters (A-Z) from string
   function remove_non_alpha_chars (p_str in varchar2) return varchar2;
 
+  -- returns true if string is alphanumeric
+  function is_str_alphanumeric (p_str in varchar2) return boolean;
+
   -- returns true if string is "empty" (contains only whitespace characters)
   function is_str_empty (p_str in varchar2) return boolean;
 
