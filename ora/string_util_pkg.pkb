@@ -509,6 +509,28 @@ begin
 end is_str_alpha;
   
   
+function is_str_alphanumeric (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+
+  Purpose:    returns true if string is alphanumeric
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^a-z|A-Z|0-9]') = 0;
+
+  return l_returnvalue;
+
+end is_str_alphanumeric;
+
+
 function is_str_empty (p_str in varchar2) return boolean
 as
   l_returnvalue boolean;
@@ -716,10 +738,11 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     06.01.2009  Created
+  MJH     12.05.2015  Leverage string_util_pkg.str_to_bool in order to reduce code redundancy
   
   */
   
-  if lower(p_str) in ('y', 'yes', 'true', '1') then
+  if str_to_bool(p_str) then
     l_returnvalue := g_yes;
   end if;
   

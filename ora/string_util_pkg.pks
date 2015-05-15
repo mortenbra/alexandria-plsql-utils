@@ -95,6 +95,9 @@ as
   -- returns true if string only contains alpha characters
   function is_str_alpha (p_str in varchar2) return boolean;  
   
+  -- returns true if string is alphanumeric
+  function is_str_alphanumeric (p_str in varchar2) return boolean;
+
   -- returns true if string is "empty" (contains only whitespace characters)
   function is_str_empty (p_str in varchar2) return boolean;
 
