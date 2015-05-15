@@ -103,6 +103,9 @@ as
                           p_decimal_separator in varchar2 := null,
                           p_thousand_separator in varchar2 := null) return boolean;
 
+  -- returns true if string is an integer
+  function is_str_integer (p_str in varchar2) return boolean;
+
   -- returns substring and indicates if string has been truncated
   function short_str (p_str in varchar2,
                       p_length in number,

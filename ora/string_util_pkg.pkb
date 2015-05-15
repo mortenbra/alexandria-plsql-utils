@@ -579,6 +579,28 @@ begin
 end is_str_number;
 
 
+function is_str_integer (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+
+  Purpose:    returns true if string is an integer
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+  
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^0-9]') = 0;
+
+  return l_returnvalue;
+
+end is_str_integer;
+
+
 function short_str (p_str in varchar2,
                     p_length in number,
                     p_truncation_indicator in varchar2 := '...') return varchar2
