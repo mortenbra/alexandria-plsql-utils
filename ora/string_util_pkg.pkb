@@ -487,6 +487,28 @@ begin
 end remove_non_alpha_chars;
 
 
+function is_str_alpha (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+  
+  Purpose:    returns true if string only contains alpha characters
+  
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+  
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^a-z|A-Z]') = 0;
+
+  return l_returnvalue;
+
+end is_str_alpha;
+  
+  
 function is_str_alphanumeric (p_str in varchar2) return boolean
 as
   l_returnvalue boolean;
