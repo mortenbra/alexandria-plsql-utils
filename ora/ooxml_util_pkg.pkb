@@ -401,7 +401,7 @@ begin
   if l_type = 's' then
     l_string_index := to_number (l_returnvalue);
     l_xml := get_xml (p_xlsx, 'xl/sharedStrings.xml');
-    l_returnvalue := xml_util_pkg.extract_value (l_xml, '/sst/si[' || (l_string_index + 1) || ']/t/text()', g_namespace_xlsx_sharedstrings);
+    l_returnvalue := xml_util_pkg.extract_value (l_xml, '/sst/si[' || (l_string_index + 1) || ']//t/text()', g_namespace_xlsx_sharedstrings);
   end if;
 
   return l_returnvalue;
@@ -453,7 +453,7 @@ begin
   
     if l_type = 's' then
       l_string_index := to_number (l_returnvalue(i));
-      l_returnvalue(i) := xml_util_pkg.extract_value (l_shared_strings, '/sst/si[' || (l_string_index + 1) || ']/t/text()', g_namespace_xlsx_sharedstrings);
+      l_returnvalue(i) := xml_util_pkg.extract_value (l_shared_strings, '/sst/si[' || (l_string_index + 1) || ']//t/text()', g_namespace_xlsx_sharedstrings);
     end if;
     
   end loop;
