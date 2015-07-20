@@ -75,7 +75,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Parse JSON using PL/SQL
 
-  * http://sourceforge.net/projects/pljson/
+  * https://github.com/pljson/pljson
   * http://reseau.erasme.org/pl-sql-library-for-JSON?lang=en
 
 
