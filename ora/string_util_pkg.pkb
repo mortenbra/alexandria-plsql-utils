@@ -345,7 +345,6 @@ as
   l_temp_str     t_max_pl_varchar2;
   l_begin_pos    pls_integer;
   l_end_pos      pls_integer;
-
 begin
 
 
@@ -359,33 +358,38 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     16.05.2007  Created
+  MBR     24.09.2015  If parameter name not specified (null), then return null
   
   */
 
-  -- get the starting position of the param name
-  l_begin_pos:=instr(p_param_string, p_param_name || p_value_separator);
+  if p_param_name is not null then
 
-  if l_begin_pos = 0 then
-    l_returnvalue:=null;
-  else
+    -- get the starting position of the param name
+    l_begin_pos:=instr(p_param_string, p_param_name || p_value_separator);
 
-    -- trim off characters before param value begins, including param name
-    l_temp_str:=substr(p_param_string, l_begin_pos, length(p_param_string) - l_begin_pos + 1);
-    l_temp_str:=del_str(l_temp_str, 1, length(p_param_name || p_value_separator));
-
-    -- now find the first next occurence of the character delimiting the params
-    -- if delimiter not found, return the rest of the string
-
-    l_end_pos:=instr(l_temp_str, p_param_separator);
-    if l_end_pos = 0 then
-      l_end_pos:=length(l_temp_str);
+    if l_begin_pos = 0 then
+      l_returnvalue:=null;
     else
-      -- strip off delimiter
-      l_end_pos:=l_end_pos - 1;
-    end if;
 
-    -- retrieve the value
-    l_returnvalue:=copy_str(l_temp_str, 1, l_end_pos);
+      -- trim off characters before param value begins, including param name
+      l_temp_str:=substr(p_param_string, l_begin_pos, length(p_param_string) - l_begin_pos + 1);
+      l_temp_str:=del_str(l_temp_str, 1, length(p_param_name || p_value_separator));
+
+      -- now find the first next occurence of the character delimiting the params
+      -- if delimiter not found, return the rest of the string
+
+      l_end_pos:=instr(l_temp_str, p_param_separator);
+      if l_end_pos = 0 then
+        l_end_pos:=length(l_temp_str);
+      else
+        -- strip off delimiter
+        l_end_pos:=l_end_pos - 1;
+      end if;
+
+      -- retrieve the value
+      l_returnvalue:=copy_str(l_temp_str, 1, l_end_pos);
+
+    end if;
 
   end if;
 
