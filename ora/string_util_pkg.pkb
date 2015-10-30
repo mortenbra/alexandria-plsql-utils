@@ -98,6 +98,33 @@ begin
 end get_str;
 
 
+procedure add_token (p_text in out varchar2,
+                     p_token in varchar2,
+                     p_separator in varchar2 := g_default_separator)
+as
+begin
+
+  /*
+
+  Purpose:    add token to string
+
+  Remarks:  
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MBR     30.10.2015  Created
+  
+  */
+
+  if p_text is null then
+    p_text := p_token;
+  else
+    p_text := p_text || p_separator || p_token;
+  end if;
+  
+end add_token;
+
+
 function get_nth_token(p_text in varchar2,
                        p_num in number,
                        p_separator in varchar2 := g_default_separator) return varchar2
