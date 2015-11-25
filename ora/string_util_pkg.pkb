@@ -1110,6 +1110,41 @@ begin
 end value_has_changed;
 
 
+function concat_array (p_array in t_str_array,
+                       p_separator in varchar2 := g_default_separator) return varchar2
+as
+  l_returnvalue                  t_max_pl_varchar2;
+begin
+
+  /*
+ 
+  Purpose:      concatenate non-null strings with specified separator
+ 
+  Remarks:      
+ 
+  Who     Date        Description
+  ------  ----------  --------------------------------
+  MBR     19.11.2015  Created
+ 
+  */
+
+  if p_array.count > 0 then
+    for i in 1 .. p_array.count loop
+      if p_array(i) is not null then
+        if l_returnvalue is null then
+          l_returnvalue := p_array(i);
+        else
+          l_returnvalue := l_returnvalue || p_separator || p_array(i);
+        end if;
+      end if;
+    end loop;
+  end if;
+
+  return l_returnvalue;
+
+end concat_array;
+
+
 end string_util_pkg;
 /
 
