@@ -1,0 +1,41 @@
+Coding Standards
+for the
+Alexandria PL/SQL Utility Library
+=================================
+
+Please follow the following coding conventions if you want to contribute to the library.
+The best way to write compliant code is to familiarize yourself with the existing code and try to adapt a similar style.
+
+General
+-------
+
+* Files should use Windows line endings. Any decent editor will understand both Windows and Unix line endings, but by sticking to Windows line endings the files can be viewed without problems even in "dumb" editors such as Notepad.
+* Make sure your Git client is set to "checkout as-is, commit as-is" with respect to line endings. See https://help.github.com/articles/dealing-with-line-endings/ and http://stackoverflow.com/questions/10418975/how-to-change-line-ending-settings for more information.
+
+Case
+----
+* All identifiers, built-in functions, packages and other code should be written in lowercase.
+* Use underscores between words.
+* CORRECT: get_invoice_totals
+* WRONG: GET_INVOICE_TOTALS
+* WRONG: getInvoiceTotals
+
+Indentation
+-----------
+* Identation size is 2 spaces
+* Do not use tabs, always use spaces
+
+Naming Conventions
+------------------
+* All packages should be postfixed with _pkg
+* All parameters should be prefixed with p_
+* All local variables should be prefixed with l_
+* All private "module"-level (ie package body-level) variables should be prefixed with m_
+* All public "global" (ie package specification-level) variables should be prefixed with g_
+* All public "global" (ie package specification-level) constants should be prefixed with c_ (note: this is not done consistently in existing code, where constants are commonly prefixed with g_ instead, but new code should use the c_ prefix)
+
+Other
+-----
+* All program units (functions and procedures) must have a standard comment block that explains the purpose of the program unit, as well as a change log that includes the author's initials (max 3 characters), date (using format DD.MM.YYYY) and a description of the change
+* All functions must define a local variable called "l_returnvalue" and the last statement in any function should be "return l_returnvalue;". Do not write functions with multiple return statements, and do not write procedures with any return statements.
+* Always include (repeat) the name of the program unit in the final "end" statement at the end of the program unit.

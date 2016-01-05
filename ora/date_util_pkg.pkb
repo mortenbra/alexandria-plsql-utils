@@ -628,5 +628,51 @@ begin
 end explode_month;
 
 
+function get_date_tab (p_calendar_string in varchar2,
+                       p_from_date in date := null,
+                       p_to_date in date := null) return t_date_array pipelined
+as
+  l_from_date                    date := coalesce(p_from_date, sysdate);
+  l_to_date                      date := coalesce(p_to_date, add_months(l_from_date,12));
+  l_date_after                   date;
+  l_next_date                    date;
+begin
+
+  /*
+ 
+  Purpose:      get table of dates based on specified calendar string
+ 
+  Remarks:      see https://oraclesponge.wordpress.com/2010/08/18/generating-lists-of-dates-in-oracle-the-dbms_scheduler-way/
+                see http://www.kibeha.dk/2014/12/date-row-generator-with-dbmsscheduler.html
+ 
+  Who     Date        Description
+  ------  ----------  --------------------------------
+  MBR     24.09.2015  Created
+ 
+  */
+
+  l_date_after := l_from_date - 1;
+
+  loop
+
+    dbms_scheduler.evaluate_calendar_string (
+      calendar_string   => p_calendar_string,
+      start_date        => l_from_date,
+      return_date_after => l_date_after,
+      next_run_date     => l_next_date
+    );
+
+    exit when l_next_date > l_to_date;
+
+    pipe row (l_next_date);
+    
+    l_date_after := l_next_date;
+
+  end loop;
+
+  return;
+
+end get_date_tab;
+
 end date_util_pkg;
 /

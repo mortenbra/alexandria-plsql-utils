@@ -221,6 +221,7 @@ function clob_to_csv (p_csv_clob in clob,
                       p_separator in varchar2 := g_default_separator,
                       p_skip_rows in number := 0) return t_csv_tab pipelined
 as
+  l_csv_clob               clob;
   l_line_separator         varchar2(2) := chr(13) || chr(10);
   l_last                   pls_integer;
   l_current                pls_integer;
@@ -243,7 +244,7 @@ begin
   Who     Date        Description
   ------  ----------  --------------------------------
   MBR     31.03.2010  Created
- 
+  JLL     20.04.2015  Modified made an internal clob because || l_line_separator is very bad for performance
   */
   
   -- If the file has a DOS newline (cr+lf), use that
@@ -253,17 +254,18 @@ begin
   end if;
 
   l_last := 1;
+  l_csv_clob := p_csv_clob || l_line_separator;
 
   loop
   
-    l_current := dbms_lob.instr (p_csv_clob || l_line_separator, l_line_separator, l_last, 1);
+    l_current := dbms_lob.instr (l_csv_clob , l_line_separator, l_last, 1);
     exit when (nvl(l_current,0) = 0);
     
     l_line_number := l_line_number + 1;
     
     if l_from_line <= l_line_number then
     
-      l_line := dbms_lob.substr(p_csv_clob || l_line_separator, l_current - l_last + 1, l_last);
+      l_line := dbms_lob.substr(l_csv_clob, l_current - l_last + 1, l_last);
       --l_line := replace(l_line, l_line_separator, '');
       l_line := replace(l_line, chr(10), '');
       l_line := replace(l_line, chr(13), '');

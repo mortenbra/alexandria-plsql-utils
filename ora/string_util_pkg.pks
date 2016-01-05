@@ -34,8 +34,8 @@ as
   g_tab                          constant varchar2(1) := chr(9);
   g_ampersand                    constant varchar2(1) := chr(38); 
 
-  g_html_entity_carriage_return  constant varchar2(5) := '&#13;';
-  g_html_nbsp                    constant varchar2(6) := '&nbsp;'; 
+  g_html_entity_carriage_return  constant varchar2(5) := chr(38) || '#13;';
+  g_html_nbsp                    constant varchar2(6) := chr(38) || 'nbsp;'; 
 
   -- return string merged with substitution values
   function get_str (p_msg in varchar2,
@@ -47,6 +47,11 @@ as
                     p_value6 in varchar2 := null,
                     p_value7 in varchar2 := null,
                     p_value8 in varchar2 := null) return varchar2;
+
+  -- add token to string
+  procedure add_token (p_text in out varchar2,
+                       p_token in varchar2,
+                       p_separator in varchar2 := g_default_separator);
 
   -- get the sub-string at the Nth position 
   function get_nth_token(p_text in varchar2,
@@ -92,6 +97,12 @@ as
   -- remove all non-alpha characters (A-Z) from string
   function remove_non_alpha_chars (p_str in varchar2) return varchar2;
 
+  -- returns true if string only contains alpha characters
+  function is_str_alpha (p_str in varchar2) return boolean;  
+  
+  -- returns true if string is alphanumeric
+  function is_str_alphanumeric (p_str in varchar2) return boolean;
+
   -- returns true if string is "empty" (contains only whitespace characters)
   function is_str_empty (p_str in varchar2) return boolean;
 
@@ -99,6 +110,9 @@ as
   function is_str_number (p_str in varchar2,
                           p_decimal_separator in varchar2 := null,
                           p_thousand_separator in varchar2 := null) return boolean;
+
+  -- returns true if string is an integer
+  function is_str_integer (p_str in varchar2) return boolean;
 
   -- returns substring and indicates if string has been truncated
   function short_str (p_str in varchar2,
@@ -150,7 +164,6 @@ as
                             p_list in varchar2,
                             p_separator in varchar2 := g_default_separator) return boolean;
 
-
   -- randomize array
   function randomize_array (p_array in t_str_array) return t_str_array;
 
@@ -158,6 +171,9 @@ as
   function value_has_changed (p_old in varchar2,
                               p_new in varchar2) return boolean;
 
+  -- concatenate non-null strings with specified separator
+  function concat_array (p_array in t_str_array,
+                         p_separator in varchar2 := g_default_separator) return varchar2;
                               
 end string_util_pkg;
 /

@@ -1,4 +1,11 @@
 
+Version 1.7.1
+=============
+
+- Added sms_util_pkg
+- Minor enhancements to date_util_pkg
+- Minor enhancements to string_util_pkg
+
 Version 1.7.0
 =============
 - Split installation script into various modules (core, xml, amazon, microsoft, etc.)

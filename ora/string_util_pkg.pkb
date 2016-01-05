@@ -98,6 +98,33 @@ begin
 end get_str;
 
 
+procedure add_token (p_text in out varchar2,
+                     p_token in varchar2,
+                     p_separator in varchar2 := g_default_separator)
+as
+begin
+
+  /*
+
+  Purpose:    add token to string
+
+  Remarks:  
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MBR     30.10.2015  Created
+  
+  */
+
+  if p_text is null then
+    p_text := p_token;
+  else
+    p_text := p_text || p_separator || p_token;
+  end if;
+  
+end add_token;
+
+
 function get_nth_token(p_text in varchar2,
                        p_num in number,
                        p_separator in varchar2 := g_default_separator) return varchar2
@@ -345,7 +372,6 @@ as
   l_temp_str     t_max_pl_varchar2;
   l_begin_pos    pls_integer;
   l_end_pos      pls_integer;
-
 begin
 
 
@@ -359,33 +385,38 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     16.05.2007  Created
+  MBR     24.09.2015  If parameter name not specified (null), then return null
   
   */
 
-  -- get the starting position of the param name
-  l_begin_pos:=instr(p_param_string, p_param_name || p_value_separator);
+  if p_param_name is not null then
 
-  if l_begin_pos = 0 then
-    l_returnvalue:=null;
-  else
+    -- get the starting position of the param name
+    l_begin_pos:=instr(p_param_string, p_param_name || p_value_separator);
 
-    -- trim off characters before param value begins, including param name
-    l_temp_str:=substr(p_param_string, l_begin_pos, length(p_param_string) - l_begin_pos + 1);
-    l_temp_str:=del_str(l_temp_str, 1, length(p_param_name || p_value_separator));
-
-    -- now find the first next occurence of the character delimiting the params
-    -- if delimiter not found, return the rest of the string
-
-    l_end_pos:=instr(l_temp_str, p_param_separator);
-    if l_end_pos = 0 then
-      l_end_pos:=length(l_temp_str);
+    if l_begin_pos = 0 then
+      l_returnvalue:=null;
     else
-      -- strip off delimiter
-      l_end_pos:=l_end_pos - 1;
-    end if;
 
-    -- retrieve the value
-    l_returnvalue:=copy_str(l_temp_str, 1, l_end_pos);
+      -- trim off characters before param value begins, including param name
+      l_temp_str:=substr(p_param_string, l_begin_pos, length(p_param_string) - l_begin_pos + 1);
+      l_temp_str:=del_str(l_temp_str, 1, length(p_param_name || p_value_separator));
+
+      -- now find the first next occurence of the character delimiting the params
+      -- if delimiter not found, return the rest of the string
+
+      l_end_pos:=instr(l_temp_str, p_param_separator);
+      if l_end_pos = 0 then
+        l_end_pos:=length(l_temp_str);
+      else
+        -- strip off delimiter
+        l_end_pos:=l_end_pos - 1;
+      end if;
+
+      -- retrieve the value
+      l_returnvalue:=copy_str(l_temp_str, 1, l_end_pos);
+
+    end if;
 
   end if;
 
@@ -487,6 +518,50 @@ begin
 end remove_non_alpha_chars;
 
 
+function is_str_alpha (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+  
+  Purpose:    returns true if string only contains alpha characters
+  
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+  
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^a-z|A-Z]') = 0;
+
+  return l_returnvalue;
+
+end is_str_alpha;
+  
+  
+function is_str_alphanumeric (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+
+  Purpose:    returns true if string is alphanumeric
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^a-z|A-Z|0-9]') = 0;
+
+  return l_returnvalue;
+
+end is_str_alphanumeric;
+
+
 function is_str_empty (p_str in varchar2) return boolean
 as
   l_returnvalue boolean;
@@ -555,6 +630,28 @@ begin
   return l_returnvalue;
 
 end is_str_number;
+
+
+function is_str_integer (p_str in varchar2) return boolean
+as
+  l_returnvalue boolean;
+begin
+
+  /*
+
+  Purpose:    returns true if string is an integer
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  MJH     12.05.2015  Created
+  
+  */
+
+  l_returnvalue := regexp_instr(p_str, '[^0-9]') = 0;
+
+  return l_returnvalue;
+
+end is_str_integer;
 
 
 function short_str (p_str in varchar2,
@@ -694,10 +791,11 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     06.01.2009  Created
+  MJH     12.05.2015  Leverage string_util_pkg.str_to_bool in order to reduce code redundancy
   
   */
   
-  if lower(p_str) in ('y', 'yes', 'true', '1') then
+  if str_to_bool(p_str) then
     l_returnvalue := g_yes;
   end if;
   
@@ -1010,6 +1108,41 @@ begin
   return l_returnvalue;
  
 end value_has_changed;
+
+
+function concat_array (p_array in t_str_array,
+                       p_separator in varchar2 := g_default_separator) return varchar2
+as
+  l_returnvalue                  t_max_pl_varchar2;
+begin
+
+  /*
+ 
+  Purpose:      concatenate non-null strings with specified separator
+ 
+  Remarks:      
+ 
+  Who     Date        Description
+  ------  ----------  --------------------------------
+  MBR     19.11.2015  Created
+ 
+  */
+
+  if p_array.count > 0 then
+    for i in 1 .. p_array.count loop
+      if p_array(i) is not null then
+        if l_returnvalue is null then
+          l_returnvalue := p_array(i);
+        else
+          l_returnvalue := l_returnvalue || p_separator || p_array(i);
+        end if;
+      end if;
+    end loop;
+  end if;
+
+  return l_returnvalue;
+
+end concat_array;
 
 
 end string_util_pkg;

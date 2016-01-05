@@ -103,5 +103,10 @@ as
   function explode_month (p_year in number,
                           p_month in number) return t_period_date_tab pipelined;
 
+  -- get table of dates based on specified calendar string
+  function get_date_tab (p_calendar_string in varchar2,
+                         p_from_date in date := null,
+                         p_to_date in date := null) return t_date_array pipelined;
+
 end date_util_pkg;
 /
