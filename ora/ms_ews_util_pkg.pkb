@@ -831,8 +831,8 @@ begin
   
   -- general Item info
   l_returnvalue.sequence_number := 1;
-  l_returnvalue.item_id := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
-  l_returnvalue.change_key := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@ChangeKey/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.item_id := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@Id', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.change_key := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@ChangeKey', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.item_size := to_number(flex_ws_api.parse_xml(l_xml, '//*/t:Size/text()', g_namespace_messages || ' ' || g_namespace_types));
   
   l_returnvalue.subject := flex_ws_api.parse_xml(l_xml, '//*/t:Subject/text()', g_namespace_messages || ' ' || g_namespace_types);
