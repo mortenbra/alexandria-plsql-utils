@@ -58,6 +58,44 @@ begin
 end get_xml;
 
 
+function get_worksheets_list( p_xlsx in blob ) return t_xlsx_sheet_properties
+as
+    l_returnvalue       t_xlsx_sheet_properties;
+    l_xml               xmltype;
+begin
+    
+    /* 
+    
+    Purpose:      get an array of the worksheets in the workbook
+    
+    Remarks:       
+    
+    Who     Date        Description 
+    ------  ----------  -------------------------------- 
+    JMW     02.03.2016  Created 
+    
+    */ 
+    
+    l_xml := get_xml( p_xlsx, 'xl/workbook.xml' );
+    
+    select xml.r_id, xml.sheetid, xml.name
+        bulk collect into l_returnvalue
+      from xmltable( xmlnamespaces( default 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
+                         'http://schemas.openxmlformats.org/officeDocument/2006/relationships' AS "r" ),
+                    '/workbook/sheets/sheet'
+                    passing l_xml
+                    columns
+                        r_id varchar2(255) path '@r:id',
+                        sheetid number path '@sheetId',
+                        name varchar2(31) path '@name' ) xml
+    where xml.r_id is not null
+    order by xml.sheetid;
+    
+    return l_returnvalue;
+    
+end get_worksheets_list;
+
+
 function get_docx_properties (p_docx in blob) return t_docx_properties
 as
   l_returnvalue t_docx_properties;
