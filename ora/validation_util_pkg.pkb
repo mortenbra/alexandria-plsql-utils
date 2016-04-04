@@ -38,7 +38,22 @@ begin
   return l_returnvalue;
 
 end is_valid_email;
+
+
+function is_valid_email2 (p_value in varchar2) return boolean
+as
+begin
+
+ /*
  
+  Purpose:      backward compatibility only
+ 
+ */
+
+  return is_valid_email(p_value);
+
+end is_valid_email2;
+
 
 function is_valid_email_list (p_value in varchar2) return boolean
 as
