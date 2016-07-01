@@ -774,22 +774,29 @@ as
     workbook.sheets( t_sheet ).autofilters( t_ind ).row_end := p_row_end;
   end;
 --
-  procedure add1xml
-    ( p_excel in out nocopy blob
-    , p_filename varchar2
-    , p_xml clob
-    )
-  is
+  procedure add1xml 
+    ( p_excel in out nocopy blob 
+    , p_filename varchar2 
+    , p_xml clob 
+    ) 
+  is 
     t_tmp blob;
-  begin
+    l_count binary_integer;
+  begin  
     dbms_lob.createtemporary( t_tmp, true );
-    for i in 0 .. trunc( length( p_xml ) / 4000 )
-    loop
-      dbms_lob.append( t_tmp, utl_i18n.string_to_raw( substr( p_xml, i * 4000 + 1, 4000 ), 'AL32UTF8' ) );
-    end loop;
-    add1file( p_excel, p_filename, t_tmp );
-    dbms_lob.freetemporary( t_tmp );
-  end;
+    l_count := trunc( length( p_xml ) / 4000 );
+    
+    if mod( length( p_xml ), 4000 ) = 0 then
+      l_count := greatest(l_count - 1, 0);
+    end if;
+    
+    for i in 0 .. l_count
+    loop 
+      dbms_lob.append( t_tmp, utl_i18n.string_to_raw( substr( p_xml, i * 4000 + 1, 4000 ),  'AL32UTF8') ); 
+    end loop; 
+    add1file( p_excel, p_filename, t_tmp ); 
+    dbms_lob.freetemporary( t_tmp ); 
+  end; 
 --
   function finish
   return blob

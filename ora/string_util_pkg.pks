@@ -34,8 +34,8 @@ as
   g_tab                          constant varchar2(1) := chr(9);
   g_ampersand                    constant varchar2(1) := chr(38); 
 
-  g_html_entity_carriage_return  constant varchar2(5) := '&#13;';
-  g_html_nbsp                    constant varchar2(6) := '&nbsp;'; 
+  g_html_entity_carriage_return  constant varchar2(5) := chr(38) || '#13;';
+  g_html_nbsp                    constant varchar2(6) := chr(38) || 'nbsp;'; 
 
   -- return string merged with substitution values
   function get_str (p_msg in varchar2,
@@ -47,6 +47,11 @@ as
                     p_value6 in varchar2 := null,
                     p_value7 in varchar2 := null,
                     p_value8 in varchar2 := null) return varchar2;
+
+  -- add token to string
+  procedure add_token (p_text in out varchar2,
+                       p_token in varchar2,
+                       p_separator in varchar2 := g_default_separator);
 
   -- get the sub-string at the Nth position 
   function get_nth_token(p_text in varchar2,
@@ -159,7 +164,6 @@ as
                             p_list in varchar2,
                             p_separator in varchar2 := g_default_separator) return boolean;
 
-
   -- randomize array
   function randomize_array (p_array in t_str_array) return t_str_array;
 
@@ -167,6 +171,9 @@ as
   function value_has_changed (p_old in varchar2,
                               p_new in varchar2) return boolean;
 
+  -- concatenate non-null strings with specified separator
+  function concat_array (p_array in t_str_array,
+                         p_separator in varchar2 := g_default_separator) return varchar2;
                               
 end string_util_pkg;
 /
