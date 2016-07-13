@@ -62,6 +62,11 @@ as
   function get_token_count(p_text in varchar2,
                            p_separator in varchar2 := g_default_separator) return number;
 
+  -- pad numbers within a string to the specified length
+  function pad_str_num (p_text in varchar2,
+                        p_pad_size in number := 10,
+                        p_decimal_separator in varchar2 := '.') return varchar2 deterministic;
+
   -- convert string to number
   function str_to_num (p_str in varchar2,
                        p_decimal_separator in varchar2 := null,
