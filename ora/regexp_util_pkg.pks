@@ -16,7 +16,7 @@ as
   g_exp_bind_vars                constant varchar2(255) := ':\w+';
   g_exp_hyperlinks               constant varchar2(255) := '<a href="[^"]+">[^<]+</a>';
   g_exp_ip_addresses             constant varchar2(255) := '(\d{1,3}\.){3}\d{1,3}';
-  g_exp_email_addresses          constant varchar2(255) := '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}';
+  g_exp_email_addresses          constant varchar2(255) := '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$';
   g_exp_email_address_list       constant varchar2(255) := '^((\s*[a-zA-Z0-9\._%-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,4}\s*[,;:]){1,100}?)?(\s*[a-zA-Z0-9\._%-]+@[a-zA-Z0-9\.-]+\.[a-zA-Z]{2,4})*$';
   g_exp_double_words             constant varchar2(255) := ' ([A-Za-z]+) \1';
   g_exp_cc_visa                  constant varchar2(255) := '^4[0-9]{12}(?:[0-9]{3})?$';
