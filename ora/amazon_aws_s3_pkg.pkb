@@ -533,14 +533,16 @@ begin
 end get_bucket_region;
 
 
-procedure get_object_list (p_bucket_name in varchar2,
-                           p_prefix in varchar2,
-                           p_max_keys in number,
-                           p_list out t_object_list,
-                           p_more_marker in out varchar2)
+procedure get_object_list (p_bucket_name                 in varchar2,
+                           p_prefix                      in varchar2,
+                           p_max_keys                    in number,
+                           p_list                       out t_object_list,
+                           p_next_continuation_token in out varchar2)
 as
   l_clob                         clob;
   l_xml                          xmltype;
+  l_xml_is_truncated             xmltype;
+  l_xml_next_continuation        xmltype;
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
@@ -548,7 +550,6 @@ as
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
-  l_count                        pls_integer := 0;
   l_returnvalue                  t_object_list;
 
 begin
@@ -557,7 +558,7 @@ begin
 
   Purpose:   get objects
 
-  Remarks:   see http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?RESTObjectGET.html
+  Remarks:   see http://docs.aws.amazon.com/AmazonS3/latest/API/v2-RESTBucketGET.html
   
              see http://code.google.com/p/plsql-utils/issues/detail?id=16
   
@@ -573,6 +574,7 @@ begin
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
   JKEMP   14.08.2012  Rewritten as private procedure, see remarks above
+  KJS     06.10.2016  Modified to use newest S3 API which performs much better on large buckets. Changed for-loop to bulk operation.
 
   */
 
@@ -594,38 +596,36 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
 
-  if p_more_marker is not null then
-    l_clob := make_request (get_url(p_bucket_name) || '?marker=' || p_more_marker || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+  if p_next_continuation_token is not null then
+    l_clob := make_request (get_url(p_bucket_name) || '?list-type=2&continuation-token=' || utl_url.escape(p_next_continuation_token) || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   else
-    l_clob := make_request (get_url(p_bucket_name) || '?max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+    l_clob := make_request (get_url(p_bucket_name) || '?list-type=2&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   end if;
-
   if (l_clob is not null) and (length(l_clob) > 0) then
 
     l_xml := xmltype (l_clob);
 
     check_for_errors (l_xml);
 
-    for l_rec in (
-      select extractValue(value(t), '*/Key', g_aws_namespace_s3_full) as key,
-        extractValue(value(t), '*/Size', g_aws_namespace_s3_full) as size_bytes,
-        extractValue(value(t), '*/LastModified', g_aws_namespace_s3_full) as last_modified
-      from table(xmlsequence(l_xml.extract('//ListBucketResult/Contents', g_aws_namespace_s3_full))) t
-      ) loop
-      l_count := l_count + 1;
-      l_returnvalue(l_count).key := l_rec.key;
-      l_returnvalue(l_count).size_bytes := l_rec.size_bytes;
-      l_returnvalue(l_count).last_modified := to_date(l_rec.last_modified, g_date_format_xml);
-    end loop;
+    select extractValue(value(t), '*/Key', g_aws_namespace_s3_full),
+      extractValue(value(t), '*/Size', g_aws_namespace_s3_full),
+      to_date(extractValue(value(t), '*/LastModified', g_aws_namespace_s3_full), g_date_format_xml)
+    bulk collect into l_returnvalue
+    from table(xmlsequence(l_xml.extract('//ListBucketResult/Contents', g_aws_namespace_s3_full))) t;
+      
+    -- check if this is the last set of data or not, and set the in/out p_next_continuation_token as expected
+    l_xml_is_truncated := l_xml.extract('//ListBucketResult/IsTruncated/text()', g_aws_namespace_s3_full);
     
-    -- check if this is the last set of data or not
-
-    l_xml := l_xml.extract('//ListBucketResult/IsTruncated/text()', g_aws_namespace_s3_full);
-    
-    if l_xml is not null and l_xml.getStringVal = 'true' then
-      p_more_marker := l_returnvalue(l_returnvalue.last).key;
+    if l_xml_is_truncated is not null and l_xml_is_truncated.getStringVal = 'true' then
+      l_xml_next_continuation := l_xml.extract('//ListBucketResult/NextContinuationToken/text()', g_aws_namespace_s3_full);
+      if l_xml_next_continuation is not null then
+        p_next_continuation_token := l_xml_next_continuation.getStringVal;
+      else
+        p_next_continuation_token := null;
+      end if;
+    else
+      p_next_continuation_token := null;
     end if;
-
   end if;
 
   p_list := l_returnvalue;
@@ -638,7 +638,7 @@ function get_object_list (p_bucket_name in varchar2,
                           p_max_keys in number := null) return t_object_list
 as
   l_object_list                  t_object_list;
-  l_more_marker                  varchar2(4000);
+  l_next_continuation_token      varchar2(4000);
 begin
 
   /*
@@ -654,11 +654,11 @@ begin
   */
   
   get_object_list (
-    p_bucket_name => p_bucket_name,
-    p_prefix      => p_prefix,
-    p_max_keys    => p_max_keys,
-    p_list        => l_object_list,
-    p_more_marker => l_more_marker --ignored by this function
+    p_bucket_name             => p_bucket_name,
+    p_prefix                  => p_prefix,
+    p_max_keys                => p_max_keys,
+    p_list                    => l_object_list,
+    p_next_continuation_token => l_next_continuation_token --ignored by this function
   );
 
   return l_object_list;
@@ -671,7 +671,7 @@ function get_object_tab (p_bucket_name in varchar2,
                          p_max_keys in number := null) return t_object_tab pipelined
 as
   l_object_list                  t_object_list;
-  l_more_marker                  varchar2(4000);
+  l_next_continuation_token           varchar2(4000);
 begin
 
   /*
@@ -689,18 +689,18 @@ begin
   loop
 
     get_object_list (
-      p_bucket_name => p_bucket_name,
-      p_prefix      => p_prefix,
-      p_max_keys    => p_max_keys,
-      p_list        => l_object_list,
-      p_more_marker => l_more_marker
+      p_bucket_name             => p_bucket_name,
+      p_prefix                  => p_prefix,
+      p_max_keys                => p_max_keys,
+      p_list                    => l_object_list,
+      p_next_continuation_token => l_next_continuation_token
       );
   
     for i in 1 .. l_object_list.count loop
       pipe row (l_object_list(i));
     end loop;
     
-    exit when l_more_marker is null;
+    exit when l_next_continuation_token is null;
   
   end loop;
 
