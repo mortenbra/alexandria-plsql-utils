@@ -1,5 +1,9 @@
 CREATE OR REPLACE package body xlsx_builder_pkg
 as
+--
+  c_LOCAL_FILE_HEADER        constant raw(4) := hextoraw( '504B0304' ); -- Local file header signature
+  c_END_OF_CENTRAL_DIRECTORY constant raw(4) := hextoraw( '504B0506' ); -- End of central directory signature
+--
   type tp_XF_fmt is record
     ( numFmtId pls_integer
     , fontId pls_integer
@@ -10,7 +14,6 @@ as
   type tp_col_fmts is table of tp_XF_fmt index by pls_integer;
   type tp_row_fmts is table of tp_XF_fmt index by pls_integer;
   type tp_widths is table of number index by pls_integer;
-  type tp_strings is table of varchar2(32767) index by pls_integer;
   type tp_cell is record
     ( value number
     , style varchar2(50)
@@ -29,11 +32,11 @@ as
     , url  varchar2(1000)
     );
   type tp_hyperlinks is table of tp_hyperlink index by pls_integer;
-  subtype tp_author is varchar2(32767);
+  subtype tp_author is varchar2(32767 char);
   type tp_authors is table of pls_integer index by tp_author;
   authors tp_authors;
   type tp_comment is record
-    ( text varchar2(32767)
+    ( text varchar2(32767 char)
     , author tp_author
     , row pls_integer
     , column pls_integer
@@ -42,6 +45,21 @@ as
     );
   type tp_comments is table of tp_comment index by pls_integer;
   type tp_mergecells is table of varchar2(21) index by pls_integer;
+  type tp_validation is record
+    ( type varchar2(10)
+    , errorstyle varchar2(32)
+    , showinputmessage boolean
+    , prompt varchar2(32767 char)
+    , title varchar2(32767 char)
+    , error_title varchar2(32767 char)
+    , error_txt varchar2(32767 char)
+    , showerrormessage boolean
+    , formula1 varchar2(32767 char)
+    , formula2 varchar2(32767 char)
+    , allowBlank boolean
+    , sqref varchar2(32767 char)
+    );
+  type tp_validations is table of tp_validation index by pls_integer;
   type tp_sheet is record
     ( rows tp_rows
     , widths tp_widths
@@ -54,6 +72,7 @@ as
     , row_fmts tp_row_fmts
     , comments tp_comments
     , mergecells tp_mergecells
+    , validations tp_validations
     );
   type tp_sheets is table of tp_sheet index by pls_integer;
   type tp_numFmt is record
@@ -72,6 +91,7 @@ as
     , family pls_integer
     , fontsize number
     , theme pls_integer
+    , RGB varchar2(8)
     , underline boolean
     , italic boolean
     , bold boolean
@@ -85,15 +105,26 @@ as
     );
   type tp_borders is table of tp_border index by pls_integer;
   type tp_numFmtIndexes is table of pls_integer index by pls_integer;
+  type tp_strings is table of pls_integer index by varchar2(32767 char);
+  type tp_str_ind is table of varchar2(32767 char) index by pls_integer;
+  type tp_defined_name is record
+    ( name varchar2(32767 char)
+    , ref varchar2(32767 char)
+    , sheet pls_integer
+    );
+  type tp_defined_names is table of tp_defined_name index by pls_integer;
   type tp_book is record
     ( sheets tp_sheets
     , strings tp_strings
+    , str_ind tp_str_ind
+    , str_cnt pls_integer := 0
     , fonts tp_fonts
     , fills tp_fills
     , borders tp_borders
     , numFmts tp_numFmts
     , cellXfs tp_cellXfs
     , numFmtIndexes tp_numFmtIndexes
+    , defined_names tp_defined_names
     );
   workbook tp_book;
 --
@@ -122,6 +153,13 @@ as
     utl_file.fclose( t_fh );
   end;
 --
+  function raw2num( p_raw raw, p_len integer, p_pos integer )
+  return number
+  is
+  begin
+    return utl_raw.cast_to_binary_integer( utl_raw.substr( p_raw, p_pos, p_len ), utl_raw.little_endian );
+  end;
+--
   function little_endian( p_big number, p_bytes pls_integer := 4 )
   return raw
   is
@@ -129,28 +167,57 @@ as
     return utl_raw.substr( utl_raw.cast_from_binary_integer( p_big, utl_raw.little_endian ), 1, p_bytes );
   end;
 --
+  function blob2num( p_blob blob, p_len integer, p_pos integer )
+  return number
+  is
+  begin
+    return utl_raw.cast_to_binary_integer( dbms_lob.substr( p_blob, p_len, p_pos ), utl_raw.little_endian );
+  end;
+--
   procedure add1file
-    ( p_zipped_blob in out nocopy blob
+    ( p_zipped_blob in out blob
     , p_name varchar2
     , p_content blob
     )
   is
     t_now date;
     t_blob blob;
+    t_len integer;
     t_clen integer;
+    t_crc32 raw(4) := hextoraw( '00000000' );
+    t_compressed boolean := false;
+    t_name raw(32767);
   begin
     t_now := sysdate;
-    t_blob := utl_compress.lz_compress( p_content );
-    t_clen := dbms_lob.getlength( t_blob );
+    t_len := nvl( dbms_lob.getlength( p_content ), 0 );
+    if t_len > 0
+    then 
+      t_blob := utl_compress.lz_compress( p_content );
+      t_clen := dbms_lob.getlength( t_blob ) - 18;
+      t_compressed := t_clen < t_len;
+      t_crc32 := dbms_lob.substr( t_blob, 4, t_clen + 11 );       
+    end if;
+    if not t_compressed
+    then 
+      t_clen := t_len;
+      t_blob := p_content;
+    end if;
     if p_zipped_blob is null
     then
       dbms_lob.createtemporary( p_zipped_blob, true );
     end if;
+    t_name := utl_i18n.string_to_raw( p_name, 'AL32UTF8' );
     dbms_lob.append( p_zipped_blob
-                   , utl_raw.concat( hextoraw( '504B0304' ) -- Local file header signature
-                                   , hextoraw( '1400' )     -- version 2.0
-                                   , hextoraw( '0000' )     -- no General purpose bits
-                                   , hextoraw( '0800' )     -- deflate
+                   , utl_raw.concat( c_LOCAL_FILE_HEADER -- Local file header signature
+                                   , hextoraw( '1400' )  -- version 2.0
+                                   , case when t_name = utl_i18n.string_to_raw( p_name, 'US8PC437' )
+                                       then hextoraw( '0000' ) -- no General purpose bits
+                                       else hextoraw( '0008' ) -- set Language encoding flag (EFS)
+                                     end 
+                                   , case when t_compressed
+                                        then hextoraw( '0800' ) -- deflate
+                                        else hextoraw( '0000' ) -- stored
+                                     end
                                    , little_endian( to_number( to_char( t_now, 'ss' ) ) / 2
                                                   + to_number( to_char( t_now, 'mi' ) ) * 32
                                                   + to_number( to_char( t_now, 'hh24' ) ) * 2048
@@ -161,29 +228,38 @@ as
                                                   + ( to_number( to_char( t_now, 'yyyy' ) ) - 1980 ) * 512
                                                   , 2
                                                   ) -- File last modification date
-                                   , dbms_lob.substr( t_blob, 4, t_clen - 7 )         -- CRC-32
-                                   , little_endian( t_clen - 18 )                     -- compressed size
-                                   , little_endian( dbms_lob.getlength( p_content ) ) -- uncompressed size
-                                   , little_endian( length( p_name ), 2 )             -- File name length
-                                   , hextoraw( '0000' )                               -- Extra field length
-                                   , utl_raw.cast_to_raw( p_name )                    -- File name
+                                   , t_crc32 -- CRC-32
+                                   , little_endian( t_clen )                      -- compressed size
+                                   , little_endian( t_len )                       -- uncompressed size
+                                   , little_endian( utl_raw.length( t_name ), 2 ) -- File name length
+                                   , hextoraw( '0000' )                           -- Extra field length
+                                   , t_name                                       -- File name
                                    )
                    );
-    dbms_lob.copy( p_zipped_blob, t_blob, t_clen - 18, dbms_lob.getlength( p_zipped_blob ) + 1, 11 ); -- compressed content
-    dbms_lob.freetemporary( t_blob );
+    if t_compressed
+    then                   
+      dbms_lob.copy( p_zipped_blob, t_blob, t_clen, dbms_lob.getlength( p_zipped_blob ) + 1, 11 ); -- compressed content
+    elsif t_clen > 0
+    then                   
+      dbms_lob.copy( p_zipped_blob, t_blob, t_clen, dbms_lob.getlength( p_zipped_blob ) + 1, 1 ); --  content
+    end if;
+    if dbms_lob.istemporary( t_blob ) = 1
+    then      
+      dbms_lob.freetemporary( t_blob );
+    end if;
   end;
 --
-  procedure finish_zip( p_zipped_blob in out nocopy blob )
+  procedure finish_zip( p_zipped_blob in out blob )
   is
     t_cnt pls_integer := 0;
     t_offs integer;
     t_offs_dir_header integer;
     t_offs_end_header integer;
-    t_comment raw(32767) := utl_raw.cast_to_raw( 'Zip-implementation by Anton Scheffer' );
+    t_comment raw(32767) := utl_raw.cast_to_raw( 'Implementation by Anton Scheffer' );
   begin
     t_offs_dir_header := dbms_lob.getlength( p_zipped_blob );
-    t_offs := dbms_lob.instr( p_zipped_blob, hextoraw( '504B0304' ), 1 );
-    while t_offs > 0
+    t_offs := 1;
+    while dbms_lob.substr( p_zipped_blob, utl_raw.length( c_LOCAL_FILE_HEADER ), t_offs ) = c_LOCAL_FILE_HEADER
     loop
       t_cnt := t_cnt + 1;
       dbms_lob.append( p_zipped_blob
@@ -192,26 +268,39 @@ as
                                      , dbms_lob.substr( p_zipped_blob, 26, t_offs + 4 )
                                      , hextoraw( '0000' )          -- File comment length
                                      , hextoraw( '0000' )          -- Disk number where file starts
-                                     , hextoraw( '0100' )          -- Internal file attributes
-                                     , hextoraw( '2000B681' )      -- External file attributes
+                                     , hextoraw( '0000' )          -- Internal file attributes => 
+                                                                   --     0000 binary file
+                                                                   --     0100 (ascii)text file
+                                     , case
+                                         when dbms_lob.substr( p_zipped_blob
+                                                             , 1
+                                                             , t_offs + 30 + blob2num( p_zipped_blob, 2, t_offs + 26 ) - 1
+                                                             ) in ( hextoraw( '2F' ) -- /
+                                                                  , hextoraw( '5C' ) -- \
+                                                                  )
+                                         then hextoraw( '10000000' ) -- a directory/folder
+                                         else hextoraw( '2000B681' ) -- a file
+                                       end                         -- External file attributes
                                      , little_endian( t_offs - 1 ) -- Relative offset of local file header
                                      , dbms_lob.substr( p_zipped_blob
-                                                      , utl_raw.cast_to_binary_integer( dbms_lob.substr( p_zipped_blob, 2, t_offs + 26 ), utl_raw.little_endian )
+                                                      , blob2num( p_zipped_blob, 2, t_offs + 26 )
                                                       , t_offs + 30
                                                       )            -- File name
                                      )
                      );
-      t_offs := dbms_lob.instr( p_zipped_blob, hextoraw( '504B0304' ), t_offs + 32 );
+      t_offs := t_offs + 30 + blob2num( p_zipped_blob, 4, t_offs + 18 )  -- compressed size
+                            + blob2num( p_zipped_blob, 2, t_offs + 26 )  -- File name length 
+                            + blob2num( p_zipped_blob, 2, t_offs + 28 ); -- Extra field length
     end loop;
     t_offs_end_header := dbms_lob.getlength( p_zipped_blob );
     dbms_lob.append( p_zipped_blob
-                   , utl_raw.concat( hextoraw( '504B0506' )                                    -- End of central directory signature
+                   , utl_raw.concat( c_END_OF_CENTRAL_DIRECTORY                                -- End of central directory signature
                                    , hextoraw( '0000' )                                        -- Number of this disk
                                    , hextoraw( '0000' )                                        -- Disk where central directory starts
                                    , little_endian( t_cnt, 2 )                                 -- Number of central directory records on this disk
                                    , little_endian( t_cnt, 2 )                                 -- Total number of central directory records
                                    , little_endian( t_offs_end_header - t_offs_dir_header )    -- Size of central directory
-                                   , little_endian( t_offs_dir_header )                        -- Relative offset of local file header
+                                   , little_endian( t_offs_dir_header )                        -- Offset of start of central directory, relative to start of archive
                                    , little_endian( nvl( utl_raw.length( t_comment ), 0 ), 2 ) -- ZIP file comment length
                                    , t_comment
                                    )
@@ -258,13 +347,16 @@ as
       workbook.sheets( s ).row_fmts.delete();
       workbook.sheets( s ).comments.delete();
       workbook.sheets( s ).mergecells.delete();
+      workbook.sheets( s ).validations.delete();
     end loop;
     workbook.strings.delete();
+    workbook.str_ind.delete();
     workbook.fonts.delete();
     workbook.fills.delete();
     workbook.borders.delete();
     workbook.numFmts.delete();
     workbook.cellXfs.delete();
+    workbook.defined_names.delete();
     workbook := null;
   end;
 --
@@ -274,6 +366,10 @@ as
     t_ind pls_integer;
   begin
     workbook.sheets( t_nr ).name := nvl( dbms_xmlgen.convert( translate( p_sheetname, 'a/\[]*:?', 'a' ) ), 'Sheet' || t_nr );
+    if workbook.strings.count() = 0
+    then
+     workbook.str_cnt := 0;
+    end if;
     if workbook.fonts.count() = 0
     then
       t_ind := get_font( 'Calibri' );
@@ -375,6 +471,7 @@ as
     , p_underline boolean := false
     , p_italic boolean := false
     , p_bold boolean := false
+    , p_rgb varchar2 := null -- this is a hex ALPHA Red Green Blue value
     )
   return pls_integer
   is
@@ -391,6 +488,9 @@ as
            and workbook.fonts( f ).underline = p_underline
            and workbook.fonts( f ).italic = p_italic
            and workbook.fonts( f ).bold = p_bold
+           and ( workbook.fonts( f ).rgb = p_rgb
+               or ( workbook.fonts( f ).rgb is null and p_rgb is null )
+               )
            )
         then
           return f;
@@ -405,6 +505,7 @@ as
     workbook.fonts( t_ind ).underline := p_underline;
     workbook.fonts( t_ind ).italic := p_italic;
     workbook.fonts( t_ind ).bold := p_bold;
+    workbook.fonts( t_ind ).rgb := p_rgb;
     return t_ind;
   end;
 --
@@ -549,19 +650,6 @@ as
     return 's="' || t_XfId || '"';
   end;
 --
-  function clean_string (p_string in varchar2)
-  return varchar2
-  is
-    invalid_ascii constant varchar2(32) :=
-      chr(00)||chr(01)||chr(02)||chr(03)||chr(04)||chr(05)||chr(06)||chr(07)||
-      chr(08)||                  chr(11)||chr(12)||         chr(14)||chr(15)||
-      chr(16)||chr(17)||chr(18)||chr(19)||chr(20)||chr(21)||chr(22)||chr(23)||
-      chr(24)||chr(25)||chr(26)||chr(27)||chr(28)||chr(29)||chr(30)||chr(31)
-    ;
-  begin
-    return translate(translate( p_string, invalid_ascii, chr(1)), chr(0)||chr(1), ' ');
-  end;
---
   procedure cell
     ( p_col pls_integer
     , p_row pls_integer
@@ -581,6 +669,23 @@ as
     workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := get_XfId( t_sheet, p_col, p_row, p_numFmtId, p_fontId, p_fillId, p_borderId, p_alignment );
   end;
 --
+  function add_string( p_string varchar2 )
+  return pls_integer
+  is
+    t_cnt pls_integer;
+  begin
+    if workbook.strings.exists( p_string )
+    then
+      t_cnt := workbook.strings( p_string );
+    else
+      t_cnt := workbook.strings.count();  
+      workbook.str_ind( t_cnt ) := p_string;
+      workbook.strings( nvl( p_string, '' ) ) := t_cnt;
+    end if;
+    workbook.str_cnt := workbook.str_cnt + 1;
+    return t_cnt;
+  end;
+--
   procedure cell
     ( p_col pls_integer
     , p_row pls_integer
@@ -596,8 +701,7 @@ as
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
     t_alignment tp_alignment := p_alignment;
   begin
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := workbook.strings.count();
-    workbook.strings( workbook.strings.count() ) := clean_string( p_value );
+    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( p_value );
     if t_alignment.wrapText is null and instr( p_value, chr(13) ) > 0
     then
       t_alignment.wrapText := true;
@@ -645,8 +749,7 @@ as
     t_ind pls_integer;
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := workbook.strings.count();
-    workbook.strings( workbook.strings.count() ) := clean_string( nvl( p_value, p_url ) );
+    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( nvl( p_value, p_url ) );
     workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, '', get_font( 'Calibri', p_theme => 10, p_underline => true ) );
     t_ind := workbook.sheets( t_sheet ).hyperlinks.count() + 1;
     workbook.sheets( t_sheet ).hyperlinks( t_ind ).cell := alfan_col( p_col ) || p_row;
@@ -688,6 +791,111 @@ as
   begin
     t_ind := workbook.sheets( t_sheet ).mergecells.count() + 1;
     workbook.sheets( t_sheet ).mergecells( t_ind ) := alfan_col( p_tl_col ) || p_tl_row || ':' || alfan_col( p_br_col ) || p_br_row;
+  end;
+--
+  procedure add_validation
+    ( p_type varchar2
+    , p_sqref varchar2
+    , p_style varchar2 := 'stop' -- stop, warning, information
+    , p_formula1 varchar2 := null
+    , p_formula2 varchar2 := null
+    , p_title varchar2 := null
+    , p_prompt varchar := null
+    , p_show_error boolean := false
+    , p_error_title varchar2 := null
+    , p_error_txt varchar2 := null
+    , p_sheet pls_integer := null
+    )
+  is
+    t_ind pls_integer;
+    t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
+  begin
+    t_ind := workbook.sheets( t_sheet ).validations.count() + 1;
+    workbook.sheets( t_sheet ).validations( t_ind ).type := p_type;
+    workbook.sheets( t_sheet ).validations( t_ind ).errorstyle := p_style;
+    workbook.sheets( t_sheet ).validations( t_ind ).sqref := p_sqref;
+    workbook.sheets( t_sheet ).validations( t_ind ).formula1 := p_formula1;
+    workbook.sheets( t_sheet ).validations( t_ind ).error_title := p_error_title;
+    workbook.sheets( t_sheet ).validations( t_ind ).error_txt := p_error_txt;
+    workbook.sheets( t_sheet ).validations( t_ind ).title := p_title;
+    workbook.sheets( t_sheet ).validations( t_ind ).prompt := p_prompt;
+    workbook.sheets( t_sheet ).validations( t_ind ).showerrormessage := p_show_error;
+  end;
+--
+  procedure list_validation
+    ( p_sqref_col pls_integer
+    , p_sqref_row pls_integer
+    , p_tl_col pls_integer -- top left
+    , p_tl_row pls_integer
+    , p_br_col pls_integer -- bottom right
+    , p_br_row pls_integer
+    , p_style varchar2 := 'stop' -- stop, warning, information
+    , p_title varchar2 := null
+    , p_prompt varchar := null
+    , p_show_error boolean := false
+    , p_error_title varchar2 := null
+    , p_error_txt varchar2 := null
+    , p_sheet pls_integer := null
+    )
+  is
+  begin
+    add_validation( 'list'
+                  , alfan_col( p_sqref_col ) || p_sqref_row
+                  , p_style => lower( p_style )
+                  , p_formula1 => '$' || alfan_col( p_tl_col ) || '$' ||  p_tl_row || ':$' || alfan_col( p_br_col ) || '$' || p_br_row 
+                  , p_title => p_title
+                  , p_prompt => p_prompt
+                  , p_show_error => p_show_error
+                  , p_error_title => p_error_title
+                  , p_error_txt => p_error_txt
+                  , p_sheet => p_sheet
+                  ); 
+  end;
+--
+  procedure list_validation
+    ( p_sqref_col pls_integer
+    , p_sqref_row pls_integer
+    , p_defined_name varchar2
+    , p_style varchar2 := 'stop' -- stop, warning, information
+    , p_title varchar2 := null
+    , p_prompt varchar := null
+    , p_show_error boolean := false
+    , p_error_title varchar2 := null
+    , p_error_txt varchar2 := null
+    , p_sheet pls_integer := null
+    )
+  is
+  begin
+    add_validation( 'list'
+                  , alfan_col( p_sqref_col ) || p_sqref_row
+                  , p_style => lower( p_style )
+                  , p_formula1 => p_defined_name 
+                  , p_title => p_title
+                  , p_prompt => p_prompt
+                  , p_show_error => p_show_error
+                  , p_error_title => p_error_title
+                  , p_error_txt => p_error_txt
+                  , p_sheet => p_sheet
+                  ); 
+  end;
+--
+  procedure defined_name
+    ( p_tl_col pls_integer -- top left
+    , p_tl_row pls_integer
+    , p_br_col pls_integer -- bottom right
+    , p_br_row pls_integer
+    , p_name varchar2
+    , p_sheet pls_integer := null
+    , p_localsheet pls_integer := null
+    )
+  is
+    t_ind pls_integer;
+    t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
+  begin
+    t_ind := workbook.defined_names.count() + 1;
+    workbook.defined_names( t_ind ).name := p_name;
+    workbook.defined_names( t_ind ).ref := 'Sheet' || t_sheet || '!$' || alfan_col( p_tl_col ) || '$' ||  p_tl_row || ':$' || alfan_col( p_br_col ) || '$' || p_br_row;
+    workbook.defined_names( t_ind ).sheet := p_localsheet;
   end;
 --
   procedure set_column_width
@@ -743,8 +951,10 @@ as
     , p_sheet pls_integer := null
     )
   is
+    t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    workbook.sheets( nvl( p_sheet, workbook.sheets.count() ) ).freeze_rows := p_nr_rows;
+    workbook.sheets( t_sheet ).freeze_cols := null;
+    workbook.sheets( t_sheet ).freeze_rows := p_nr_rows;
   end;
 --
   procedure freeze_cols
@@ -752,8 +962,22 @@ as
     , p_sheet pls_integer := null
     )
   is
+    t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    workbook.sheets( nvl( p_sheet, workbook.sheets.count() ) ).freeze_cols := p_nr_cols;
+    workbook.sheets( t_sheet ).freeze_rows := null;
+    workbook.sheets( t_sheet ).freeze_cols := p_nr_cols;
+  end;
+--
+  procedure freeze_pane
+    ( p_col pls_integer
+    , p_row pls_integer
+    , p_sheet pls_integer := null
+    )
+  is
+    t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
+  begin
+    workbook.sheets( t_sheet ).freeze_rows := p_row;
+    workbook.sheets( t_sheet ).freeze_cols := p_col;
   end;
 --
   procedure set_autofilter
@@ -767,12 +991,41 @@ as
     t_ind pls_integer;
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    t_ind := workbook.sheets( t_sheet ).autofilters.count() + 1;
+    t_ind := 1;
     workbook.sheets( t_sheet ).autofilters( t_ind ).column_start := p_column_start;
     workbook.sheets( t_sheet ).autofilters( t_ind ).column_end := p_column_end;
     workbook.sheets( t_sheet ).autofilters( t_ind ).row_start := p_row_start;
     workbook.sheets( t_sheet ).autofilters( t_ind ).row_end := p_row_end;
+    defined_name
+      ( p_column_start
+      , p_row_start
+      , p_column_end
+      , p_row_end
+      , '_xlnm._FilterDatabase'
+      , t_sheet
+      , t_sheet - 1
+      );
   end;
+--
+/*
+  procedure add1xml
+    ( p_excel in out nocopy blob
+    , p_filename varchar2
+    , p_xml clob
+    )
+  is
+    t_tmp blob;
+    c_step constant number := 24396;
+  begin
+    dbms_lob.createtemporary( t_tmp, true );
+    for i in 0 .. trunc( length( p_xml ) / c_step )
+    loop
+      dbms_lob.append( t_tmp, utl_i18n.string_to_raw( substr( p_xml, i * c_step + 1, c_step ), 'AL32UTF8' ) );
+    end loop;
+    add1file( p_excel, p_filename, t_tmp );
+    dbms_lob.freetemporary( t_tmp );
+  end;
+*/
 --
   procedure add1xml
     ( p_excel in out nocopy blob
@@ -781,12 +1034,23 @@ as
     )
   is
     t_tmp blob;
+    dest_offset integer := 1;
+    src_offset integer := 1;
+    lang_context integer;
+    warning integer;
   begin
+    lang_context := dbms_lob.DEFAULT_LANG_CTX;
     dbms_lob.createtemporary( t_tmp, true );
-    for i in 0 .. trunc( length( p_xml ) / 4000 )
-    loop
-      dbms_lob.append( t_tmp, utl_i18n.string_to_raw( substr( p_xml, i * 4000 + 1, 4000 ), 'AL32UTF8' ) );
-    end loop;
+    dbms_lob.converttoblob
+      ( t_tmp
+      , p_xml
+      , dbms_lob.lobmaxsize
+      , dest_offset
+      , src_offset
+      ,  nls_charset_id( 'AL32UTF8'  ) 
+      , lang_context
+      , warning
+      );
     add1file( p_excel, p_filename, t_tmp );
     dbms_lob.freetemporary( t_tmp );
   end;
@@ -796,16 +1060,19 @@ as
   is
     t_excel blob;
     t_xxx clob;
-    t_tmp clob;
+    t_tmp varchar2(32767 char);
+    t_str varchar2(32767 char);
     t_c number;
     t_h number;
     t_w number;
     t_cw number;
-    t_cell varchar2(1000);
+    t_cell varchar2(1000 char);
     t_row_ind pls_integer;
     t_col_min pls_integer;
     t_col_max pls_integer;
     t_col_ind pls_integer;
+    t_len pls_integer;
+ts timestamp := systimestamp;
   begin
     dbms_lob.createtemporary( t_excel, true );
     t_xxx := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -900,10 +1167,13 @@ as
         case when workbook.fonts( f ).italic then '<i/>' end ||
         case when workbook.fonts( f ).underline then '<u/>' end ||
 '<sz val="' || to_char( workbook.fonts( f ).fontsize, 'TM9', 'NLS_NUMERIC_CHARACTERS=.,' )  || '"/>
-<color theme="' || workbook.fonts( f ).theme || '"/>
+<color ' || case when workbook.fonts( f ).rgb is not null
+              then 'rgb="' || workbook.fonts( f ).rgb
+              else 'theme="' || workbook.fonts( f ).theme
+            end || '"/>
 <name val="' || workbook.fonts( f ).name || '"/>
 <family val="' || workbook.fonts( f ).family || '"/>
-<scheme val="minor"/>
+<scheme val="none"/>
 </font>';
     end loop;
     t_xxx := t_xxx || '</fonts>
@@ -972,10 +1242,20 @@ as
       t_xxx := t_xxx || '
 <sheet name="' || workbook.sheets( s ).name || '" sheetId="' || s || '" r:id="rId' || ( 9 + s ) || '"/>';
     end loop;
-    t_xxx := t_xxx || '
-</sheets>
-<calcPr calcId="144525"/>
-</workbook>';
+    t_xxx := t_xxx || '</sheets>';
+    if workbook.defined_names.count() > 0
+    then
+      t_xxx := t_xxx || '<definedNames>';
+      for s in 1 .. workbook.defined_names.count()
+      loop
+        t_xxx := t_xxx || '
+<definedName name="' || workbook.defined_names( s ).name || '"' ||
+            case when workbook.defined_names( s ).sheet is not null then ' localSheetId="' || to_char( workbook.defined_names( s ).sheet ) || '"' end ||
+            '>' || workbook.defined_names( s ).ref || '</definedName>';
+      end loop;
+      t_xxx := t_xxx || '</definedNames>';
+    end if;
+    t_xxx := t_xxx || '<calcPr calcId="144525"/></workbook>';
     add1xml( t_excel, 'xl/workbook.xml', t_xxx );
     t_xxx := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
@@ -1277,13 +1557,22 @@ as
 <dimension ref="' || alfan_col( t_col_min ) || workbook.sheets( s ).rows.first() || ':' || alfan_col( t_col_max ) || workbook.sheets( s ).rows.last() || '"/>
 <sheetViews>
 <sheetView' || case when s = 1 then ' tabSelected="1"' end || ' workbookViewId="0">';
-      if workbook.sheets( s ).freeze_rows > 0
+      if workbook.sheets( s ).freeze_rows > 0 and workbook.sheets( s ).freeze_cols > 0
       then
-        t_xxx := t_xxx || '<pane ySplit="' || workbook.sheets( s ).freeze_rows || '" topLeftCell="A' || ( workbook.sheets( s ).freeze_rows + 1 ) || '" activePane="bottomLeft" state="frozen"/>';
-      end if;
-      if workbook.sheets( s ).freeze_cols > 0
-      then
-        t_xxx := t_xxx || '<pane xSplit="' || workbook.sheets( s ).freeze_cols || '" topLeftCell="' || alfan_col( workbook.sheets( s ).freeze_cols + 1 ) || '1" activePane="bottomLeft" state="frozen"/>';
+        t_xxx := t_xxx || ( '<pane xSplit="' || workbook.sheets( s ).freeze_cols || '" '
+                          || 'ySplit="' || workbook.sheets( s ).freeze_rows || '" '
+                          || 'topLeftCell="' || alfan_col( workbook.sheets( s ).freeze_cols + 1 ) || ( workbook.sheets( s ).freeze_rows + 1 ) || '" '
+                          || 'activePane="bottomLeft" state="frozen"/>'
+                          );
+      else
+        if workbook.sheets( s ).freeze_rows > 0
+        then
+          t_xxx := t_xxx || '<pane ySplit="' || workbook.sheets( s ).freeze_rows || '" topLeftCell="A' || ( workbook.sheets( s ).freeze_rows + 1 ) || '" activePane="bottomLeft" state="frozen"/>';
+        end if;
+        if workbook.sheets( s ).freeze_cols > 0
+        then
+          t_xxx := t_xxx || '<pane xSplit="' || workbook.sheets( s ).freeze_cols || '" topLeftCell="' || alfan_col( workbook.sheets( s ).freeze_cols + 1 ) || '1" activePane="bottomLeft" state="frozen"/>';
+        end if;
       end if;
       t_xxx := t_xxx || '</sheetView>
 </sheetViews>
@@ -1295,7 +1584,7 @@ as
         while t_col_ind is not null
         loop
           t_xxx := t_xxx ||
-             '<col min="' || t_col_ind || '" max="' || t_col_ind || '" width="' || workbook.sheets( s ).widths( t_col_ind ) || '" customWidth="1"/>';
+             '<col min="' || t_col_ind || '" max="' || t_col_ind || '" width="' || to_char( workbook.sheets( s ).widths( t_col_ind ), 'TM9', 'NLS_NUMERIC_CHARACTERS=.,' ) || '" customWidth="1"/>';
           t_col_ind := workbook.sheets( s ).widths.next( t_col_ind );
         end loop;
         t_xxx := t_xxx || '</cols>';
@@ -1306,26 +1595,31 @@ as
       while t_row_ind is not null
       loop
         t_tmp :=  t_tmp || '<row r="' || t_row_ind || '" spans="' || t_col_min || ':' || t_col_max || '">';
+        t_len := length( t_tmp );
         t_col_ind := workbook.sheets( s ).rows( t_row_ind ).first();
         while t_col_ind is not null
         loop
-          t_cell := '<c r="' || alfan_col( t_col_ind ) || t_row_ind || '"';
-          t_cell := t_cell || ' ' || workbook.sheets( s ).rows( t_row_ind )( t_col_ind ).style;
-          t_cell := t_cell || '><v>';
-          t_cell := t_cell || to_char( workbook.sheets( s ).rows( t_row_ind )( t_col_ind ).value, 'TM9', 'NLS_NUMERIC_CHARACTERS=.,' );
-          t_cell := t_cell || '</v></c>';
+          t_cell := '<c r="' || alfan_col( t_col_ind ) || t_row_ind || '"'
+                 || ' ' || workbook.sheets( s ).rows( t_row_ind )( t_col_ind ).style
+                 || '><v>'
+                 || to_char( workbook.sheets( s ).rows( t_row_ind )( t_col_ind ).value, 'TM9', 'NLS_NUMERIC_CHARACTERS=.,' )
+                 || '</v></c>';
+          if t_len > 32000
+          then
+            dbms_lob.writeappend( t_xxx, t_len, t_tmp );
+            t_tmp := null;
+            t_len := 0;
+          end if;
           t_tmp :=  t_tmp || t_cell;
+          t_len := t_len + length( t_cell );
           t_col_ind := workbook.sheets( s ).rows( t_row_ind ).next( t_col_ind );
         end loop;
         t_tmp :=  t_tmp || '</row>';
-        if length( t_tmp ) > 8000
-        then
-          t_xxx := t_xxx || t_tmp;
-          t_tmp := null;
-        end if;
         t_row_ind := workbook.sheets( s ).rows.next( t_row_ind );
       end loop;
-      t_xxx := t_xxx || t_tmp || '</sheetData>';
+      t_tmp :=  t_tmp || '</sheetData>';
+      t_len := length( t_tmp );
+      dbms_lob.writeappend( t_xxx, t_len, t_tmp );
       for a in 1 ..  workbook.sheets( s ).autofilters.count()
       loop
         t_xxx := t_xxx || '<autoFilter ref="' ||
@@ -1343,6 +1637,51 @@ as
         end loop;
         t_xxx := t_xxx || '</mergeCells>';
       end if;
+--
+      if workbook.sheets( s ).validations.count() > 0
+      then
+        t_xxx := t_xxx || '<dataValidations count="' || to_char( workbook.sheets( s ).validations.count() ) || '">';
+        for m in 1 ..  workbook.sheets( s ).validations.count()
+        loop
+          t_xxx := t_xxx || '<dataValidation' ||
+              ' type="' || workbook.sheets( s ).validations( m ).type || '"' ||
+              ' errorStyle="' || workbook.sheets( s ).validations( m ).errorstyle || '"' ||
+              ' allowBlank="' || case when nvl( workbook.sheets( s ).validations( m ).allowBlank, true ) then '1' else '0' end || '"' ||
+              ' sqref="' || workbook.sheets( s ).validations( m ).sqref || '"';
+          if workbook.sheets( s ).validations( m ).prompt is not null
+          then
+            t_xxx := t_xxx || ' showInputMessage="1" prompt="' || workbook.sheets( s ).validations( m ).prompt || '"';
+            if workbook.sheets( s ).validations( m ).title is not null
+            then
+              t_xxx := t_xxx || ' promptTitle="' || workbook.sheets( s ).validations( m ).title || '"';
+            end if;
+          end if;
+          if workbook.sheets( s ).validations( m ).showerrormessage
+          then
+            t_xxx := t_xxx || ' showErrorMessage="1"';
+            if workbook.sheets( s ).validations( m ).error_title is not null
+            then
+              t_xxx := t_xxx || ' errorTitle="' || workbook.sheets( s ).validations( m ).error_title || '"';
+            end if;
+            if workbook.sheets( s ).validations( m ).error_txt is not null
+            then
+              t_xxx := t_xxx || ' error="' || workbook.sheets( s ).validations( m ).error_txt || '"';
+            end if;
+          end if;
+          t_xxx := t_xxx || '>';
+          if workbook.sheets( s ).validations( m ).formula1 is not null
+          then
+            t_xxx := t_xxx || '<formula1>' || workbook.sheets( s ).validations( m ).formula1 || '</formula1>';
+          end if;
+          if workbook.sheets( s ).validations( m ).formula2 is not null
+          then
+            t_xxx := t_xxx || '<formula2>' || workbook.sheets( s ).validations( m ).formula2 || '</formula2>';
+          end if;
+          t_xxx := t_xxx || '</dataValidation>';
+        end loop;
+        t_xxx := t_xxx || '</dataValidations>';
+      end if;
+--
       if workbook.sheets( s ).hyperlinks.count() > 0
       then
         t_xxx := t_xxx || '<hyperlinks>';
@@ -1357,6 +1696,7 @@ as
       then
         t_xxx := t_xxx || '<legacyDrawing r:id="rId' || ( workbook.sheets( s ).hyperlinks.count() + 1 ) || '"/>';
       end if;
+--
       t_xxx := t_xxx || '</worksheet>';
       add1xml( t_excel, 'xl/worksheets/sheet' || s || '.xml', t_xxx );
       if workbook.sheets( s ).hyperlinks.count() > 0 or workbook.sheets( s ).comments.count() > 0
@@ -1469,16 +1809,17 @@ style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:' || to_char
     t_xxx := t_xxx || '</Relationships>';
     add1xml( t_excel, 'xl/_rels/workbook.xml.rels', t_xxx );
     t_xxx := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' || workbook.strings.count() || '" uniqueCount="' || workbook.strings.count() || '">';
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="' || workbook.str_cnt || '" uniqueCount="' || workbook.strings.count() || '">';
     t_tmp := null;
-    for i in 0 .. workbook.strings.count() - 1
+    for i in 0 .. workbook.str_ind.count() - 1
     loop
-      t_tmp := t_tmp || '<si><t>' || dbms_xmlgen.convert( substr( workbook.strings( i ), 1, 32000 ) ) || '</t></si>';
-      if length( t_tmp ) > 8000
+      t_str := '<si><t>' || dbms_xmlgen.convert( substr( workbook.str_ind( i ), 1, 32000 ) ) || '</t></si>';
+      if length( t_tmp ) + length( t_str ) > 32000
       then
         t_xxx := t_xxx || t_tmp;
         t_tmp := null;
       end if;
+      t_tmp := t_tmp || t_str;
     end loop;
     t_xxx := t_xxx || t_tmp || '</sst>';
     add1xml( t_excel, 'xl/sharedStrings.xml', t_xxx );
@@ -1560,7 +1901,10 @@ style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:' || to_char
               dbms_sql.column_value( t_c, c, n_tab );
               for i in 0 .. t_r - 1
               loop
-                cell( c, t_cur_row + i, n_tab( i + n_tab.first() ), p_sheet => t_sheet );
+                if n_tab( i + n_tab.first() ) is not null
+                then
+                  cell( c, t_cur_row + i, n_tab( i + n_tab.first() ), p_sheet => t_sheet );
+                end if;
               end loop;
               n_tab.delete;
             when t_desc_tab( c ).col_type in ( 12, 178, 179, 180, 181 , 231 )
@@ -1568,7 +1912,10 @@ style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:' || to_char
               dbms_sql.column_value( t_c, c, d_tab );
               for i in 0 .. t_r - 1
               loop
-                cell( c, t_cur_row + i, d_tab( i + d_tab.first() ), p_sheet => t_sheet );
+                if d_tab( i + d_tab.first() ) is not null
+                then
+                  cell( c, t_cur_row + i, d_tab( i + d_tab.first() ), p_sheet => t_sheet );
+                end if;
               end loop;
               d_tab.delete;
             when t_desc_tab( c ).col_type in ( 1, 8, 9, 96, 112 )
@@ -1576,7 +1923,10 @@ style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:' || to_char
               dbms_sql.column_value( t_c, c, v_tab );
               for i in 0 .. t_r - 1
               loop
-                cell( c, t_cur_row + i, v_tab( i + v_tab.first() ), p_sheet => t_sheet );
+                if v_tab( i + v_tab.first() ) is not null
+                then
+                  cell( c, t_cur_row + i, v_tab( i + v_tab.first() ), p_sheet => t_sheet );
+                end if;
               end loop;
               v_tab.delete;
             else

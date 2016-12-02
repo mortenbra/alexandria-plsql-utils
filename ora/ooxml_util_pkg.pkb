@@ -246,7 +246,9 @@ begin
   
     l_blob := zip_util_pkg.get_file (p_template, l_file_list(i));
     
-    if l_file_list(i) in ('word/document.xml', 'word/footer1.xml', 'xl/sharedStrings.xml') or (l_file_list(i) like 'ppt/slides/slide%.xml') then
+    if l_file_list(i) in ('word/document.xml', 'word/footer1.xml', 'xl/sharedStrings.xml')
+        or (l_file_list(i) like 'ppt/slides/slide%.xml')
+        or (l_file_list(i) like 'ppt/notesSlides/notesSlide%.xml') then
     
       l_clob := sql_util_pkg.blob_to_clob (l_blob);
       l_clob := string_util_pkg.multi_replace (l_clob, p_names, p_values);

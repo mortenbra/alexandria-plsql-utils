@@ -522,7 +522,7 @@ begin
   l_xml := make_request (l_soap_action, get_request_envelope);
 
   l_returnvalue.sequence_number := 1;
-  l_returnvalue.folder_id := flex_ws_api.parse_xml(l_xml, '//*/t:FolderId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.folder_id := flex_ws_api.parse_xml(l_xml, '//*/t:FolderId/@Id', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.display_name := flex_ws_api.parse_xml(l_xml, '//*/t:DisplayName/text()', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.total_count := to_number(flex_ws_api.parse_xml(l_xml, '//*/t:TotalCount/text()', g_namespace_messages || ' ' || g_namespace_types));
   l_returnvalue.child_folder_count := to_number(flex_ws_api.parse_xml(l_xml, '//*/t:ChildFolderCount/text()', g_namespace_messages || ' ' || g_namespace_types));
@@ -831,8 +831,8 @@ begin
   
   -- general Item info
   l_returnvalue.sequence_number := 1;
-  l_returnvalue.item_id := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
-  l_returnvalue.change_key := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@ChangeKey/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.item_id := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@Id', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.change_key := flex_ws_api.parse_xml(l_xml, '//*/t:ItemId/@ChangeKey', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.item_size := to_number(flex_ws_api.parse_xml(l_xml, '//*/t:Size/text()', g_namespace_messages || ' ' || g_namespace_types));
   
   l_returnvalue.subject := flex_ws_api.parse_xml(l_xml, '//*/t:Subject/text()', g_namespace_messages || ' ' || g_namespace_types);
@@ -1209,7 +1209,7 @@ begin
   l_xml := make_request (l_soap_action, get_request_envelope);
   
   -- TODO: verify that ID is returned/parsed...
-  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:CalendarItem/t:ItemId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:CalendarItem/t:ItemId/@Id', g_namespace_messages || ' ' || g_namespace_types);
   
   return l_returnvalue;
 
@@ -1278,7 +1278,7 @@ begin
   l_xml := make_request (l_soap_action, get_request_envelope);
   
   -- TODO: verify that ID is returned/parsed...
-  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:Task/t:ItemId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:Task/t:ItemId/@Id', g_namespace_messages || ' ' || g_namespace_types);
   
   return l_returnvalue;
 
@@ -1376,7 +1376,7 @@ begin
   l_xml := make_request (l_soap_action, get_request_envelope);
   
   -- TODO: verify that ID is returned/parsed...
-  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:Message/t:ItemId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Items/t:Message/t:ItemId/@Id', g_namespace_messages || ' ' || g_namespace_types);
   
   return l_returnvalue;
 
@@ -1633,7 +1633,7 @@ begin
  
   l_xml := make_request (l_soap_action, get_request_envelope);
 
-  l_returnvalue.attachment_id := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:AttachmentId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue.attachment_id := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:AttachmentId/@Id', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.name := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:Name/text()', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.content_type := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:ContentType/text()', g_namespace_messages || ' ' || g_namespace_types);
   l_returnvalue.content_id := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:ContentId/text()', g_namespace_messages || ' ' || g_namespace_types);
@@ -1706,7 +1706,7 @@ begin
   l_xml := make_request (l_soap_action, get_request_envelope);
 
   -- TODO: verify that value is returned... 
-  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:AttachmentId/@Id/text()', g_namespace_messages || ' ' || g_namespace_types);
+  l_returnvalue := flex_ws_api.parse_xml(l_xml, '//*/m:Attachments/t:FileAttachment/t:AttachmentId/@Id', g_namespace_messages || ' ' || g_namespace_types);
 
   return l_returnvalue;
  

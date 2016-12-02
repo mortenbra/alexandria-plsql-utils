@@ -34,6 +34,7 @@ prompt Creating package specifications
 @../ora/ntlm_http_pkg.pks
 @../ora/ooxml_util_pkg.pks
 @../ora/owa_util_pkg.pks
+@../ora/paypal_util_pkg.pks
 @../ora/pdf_builder_pkg.pks
 @../ora/random_util_pkg.pks
 @../ora/raw_util_pkg.pks
@@ -85,6 +86,7 @@ prompt Creating package bodies
 @../ora/ntlm_http_pkg.pkb
 @../ora/ooxml_util_pkg.pkb
 @../ora/owa_util_pkg.pkb
+@../ora/paypal_util_pkg.pkb
 @../ora/pdf_builder_pkg.pkb
 @../ora/random_util_pkg.pkb
 @../ora/raw_util_pkg.pkb
