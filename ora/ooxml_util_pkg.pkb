@@ -310,7 +310,7 @@ end get_xlsx_properties;
 
 function get_xlsx_column_number( p_column_ref in varchar2 ) return number
 as
-    l_column_number     number;
+    l_returnvalue       number;
     l_char_num          number;
     l_power             number;
     l_factor            decimal;
@@ -334,11 +334,11 @@ begin
     for i in 1..length( p_column_ref ) loop
         l_char_num := ascii( substr( p_column_ref, i, 1 ));
         l_factor := ( l_char_num - 65 ) + 1;
-        l_column_number := ( l_factor * power( 26, l_power )) + NVL( l_column_number, 0 );
+        l_returnvalue := ( l_factor * power( 26, l_power )) + NVL( l_returnvalue, 0 );
         l_power := l_power - 1;
     end loop;
 
-    return l_column_number;
+    return l_returnvalue;
 
 end get_xlsx_column_number;
 
@@ -347,7 +347,7 @@ function get_xlsx_column_ref( p_column_number in number ) return varchar2
 as
     l_dividend      decimal;
     l_modulo        decimal;
-    l_column_name   varchar2(3);
+    l_returnvalue   varchar2(3);
 begin
 
     /*
@@ -368,11 +368,11 @@ begin
 
     while l_dividend > 0 loop
         l_modulo := mod( l_dividend - 1, 26 );
-        l_column_name := to_char( chr( l_modulo + 65 )) || l_column_name;
+        l_returnvalue := to_char( chr( l_modulo + 65 )) || l_returnvalue;
         l_dividend := (( l_dividend - l_modulo ) / 26 );
     end loop;
 
-    return l_column_name;
+    return l_returnvalue;
 
 end get_xlsx_column_ref;
 
