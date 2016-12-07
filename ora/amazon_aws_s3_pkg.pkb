@@ -11,7 +11,7 @@ as
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     09.01.2011  Created
-
+  
   */
 
   g_aws_url_s3             constant varchar2(255) := 'http://s3.amazonaws.com/';
@@ -19,7 +19,7 @@ as
   g_aws_namespace_s3       constant varchar2(255) := 'http://s3.amazonaws.com/doc/2006-03-01/';
   g_aws_namespace_s3_full  constant varchar2(255) := 'xmlns="' || g_aws_namespace_s3 || '"';
 
-  g_date_format_xml        constant varchar2(30)  := 'YYYY-MM-DD"T"HH24:MI:SS".000Z"';
+  g_date_format_xml        constant varchar2(30) := 'YYYY-MM-DD"T"HH24:MI:SS".000Z"';
 
 
 procedure raise_error (p_error_message in varchar2)
@@ -30,14 +30,14 @@ begin
 
   Purpose:   raise error
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
-
+  
   */
-
+  
   raise_application_error (-20000, p_error_message);
 
 end raise_error;
@@ -52,12 +52,12 @@ begin
 
   Purpose:   check for errors (clob)
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
-
+  
   */
 
   if (p_clob is not null) and (length(p_clob) > 0) then
@@ -68,7 +68,7 @@ begin
       debug_pkg.print (l_xml);
       raise_error (l_xml.extract('/Error/Message/text()').getstringval());
     end if;
-
+    
   end if;
 
 end check_for_errors;
@@ -82,12 +82,12 @@ begin
 
   Purpose:   check for errors (XMLType)
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
-
+  
   */
 
   if p_xml.existsnode('/Error') = 1 then
@@ -134,7 +134,7 @@ begin
     end if;
 
   end if;
-
+  
   return l_returnvalue;
 
 end check_for_redirect;
@@ -164,25 +164,25 @@ begin
 
   Purpose:   make HTTP request
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
-
+  
   */
-
+  
   debug_pkg.printf('%1 %2', p_http_method, p_url);
 
   l_http_req := utl_http.begin_request(p_url, p_http_method);
-
+  
   if p_header_names.count > 0 then
     for i in p_header_names.first .. p_header_names.last loop
       --debug_pkg.printf('%1: %2', p_header_names(i), p_header_values(i));
       utl_http.set_header(l_http_req, p_header_names(i), p_header_values(i));
     end loop;
   end if;
-
+  
   if p_request_blob is not null then
 
     begin
@@ -198,7 +198,7 @@ begin
     end;
 
   elsif p_request_clob is not null then
-
+  
     begin
       loop
         dbms_lob.read (p_request_clob, l_amount, l_offset, l_buffer);
@@ -231,7 +231,7 @@ begin
   end;
 
   utl_http.end_response (l_http_resp);
-
+  
   return l_returnvalue;
 
 end make_request;
@@ -248,13 +248,13 @@ begin
 
   Purpose:   construct a valid URL
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     03.03.2011  Created
   TS      18.05.2015  Add p_protocol
-
+  
   */
 
   if lower(p_protocol) not in ('http', 'https') then
@@ -262,9 +262,9 @@ begin
   end if;
 
   l_returnvalue := lower(p_protocol) || '://' || p_bucket_name || '.' || g_aws_host_s3 || '/' || p_key;
-
+  
   return l_returnvalue;
-
+  
 end get_url;
 
 
@@ -277,18 +277,18 @@ begin
 
   Purpose:   construct a valid host string
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     03.03.2011  Created
-
+  
   */
 
   l_returnvalue := p_bucket_name || '.' || g_aws_host_s3;
-
+  
   return l_returnvalue;
-
+  
 end get_host;
 
 
@@ -299,25 +299,25 @@ as
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
-
+  
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
   l_count                        pls_integer := 0;
   l_returnvalue                  t_bucket_list;
-
+  
 begin
 
   /*
 
   Purpose:   get buckets
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     09.01.2011  Created
-
+  
   */
 
   l_date_str := amazon_aws_auth_pkg.get_date_string;
@@ -341,9 +341,9 @@ begin
   l_clob := make_request (g_aws_url_s3, 'GET', l_header_names, l_header_values, null);
 
   if (l_clob is not null) and (length(l_clob) > 0) then
-
+  
     l_xml := xmltype (l_clob);
-
+    
     check_for_errors (l_xml);
 
     for l_rec in (
@@ -355,7 +355,7 @@ begin
       l_returnvalue(l_count).bucket_name := l_rec.bucket_name;
       l_returnvalue(l_count).creation_date := to_date(l_rec.creation_date, g_date_format_xml);
     end loop;
-
+    
   end if;
 
   return l_returnvalue;
@@ -372,20 +372,20 @@ begin
 
   Purpose:   get buckets
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     19.01.2011  Created
-
+  
   */
-
+  
   l_bucket_list := get_bucket_list;
-
+  
   for i in 1 .. l_bucket_list.count loop
     pipe row (l_bucket_list(i));
   end loop;
-
+  
   return;
 
 end get_bucket_tab;
@@ -402,7 +402,7 @@ as
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
-
+  
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
@@ -413,16 +413,16 @@ begin
   Purpose:   create bucket
 
   Remarks:   *** bucket names must be unique across all of Amazon S3 ***
-
+  
              see http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketPUT.html
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
   TS      18.05.2015  Add p_protocol
-
+  
   */
-
+  
   l_date_str := amazon_aws_auth_pkg.get_date_string;
 
   if p_region is not null then
@@ -445,7 +445,7 @@ begin
   l_header_names(3) := 'Authorization';
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
-
+  
   if p_region is not null then
 
     l_request_body := '<CreateBucketConfiguration ' || g_aws_namespace_s3_full || '><LocationConstraint>' || p_region || '</LocationConstraint></CreateBucketConfiguration>';
@@ -463,7 +463,7 @@ begin
   end if;
 
   l_clob := make_request (get_url (p_bucket_name => p_bucket_name, p_protocol => p_protocol), 'PUT', l_header_names, l_header_values, null, l_request_body);
-
+  
   check_for_errors (l_clob);
 
 end new_bucket;
@@ -478,10 +478,10 @@ as
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
-
+  
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
-
+  
   l_returnvalue                  varchar2(255);
 
 begin
@@ -491,14 +491,14 @@ begin
   Purpose:   get bucket region
 
   Remarks:   see http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketGETlocation.html
-
+  
              note that the region will be NULL for buckets in the default region (US)
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     03.03.2011  Created
   TS      18.05.2015  Add p_protocol
-
+  
   */
 
   l_date_str := amazon_aws_auth_pkg.get_date_string;
@@ -522,11 +522,11 @@ begin
   l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?location', 'GET', l_header_names, l_header_values);
 
   if (l_clob is not null) and (length(l_clob) > 0) then
-
+  
     l_xml := xmltype (l_clob);
-
+    
     check_for_errors (l_xml);
-
+    
     if l_xml.existsnode('/LocationConstraint', g_aws_namespace_s3_full) = 1 then
       -- see http://pbarut.blogspot.com/2006/11/ora-30625-and-xmltype.html
       if l_xml.extract('/LocationConstraint/text()', g_aws_namespace_s3_full) is not null then
@@ -535,7 +535,7 @@ begin
         l_returnvalue := null;
       end if;
     end if;
-
+    
   end if;
 
   return l_returnvalue;
@@ -547,11 +547,13 @@ procedure get_object_list (p_bucket_name in varchar2,
                            p_prefix in varchar2,
                            p_max_keys in number,
                            p_list out t_object_list,
-                           p_more_marker in out varchar2,
+                           p_next_continuation_token in out varchar2,
                            p_protocol in varchar2 := 'http')
 as
   l_clob                         clob;
   l_xml                          xmltype;
+  l_xml_is_truncated             xmltype;
+  l_xml_next_continuation        xmltype;
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
@@ -559,7 +561,6 @@ as
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
-  l_count                        pls_integer := 0;
   l_returnvalue                  t_object_list;
 
 begin
@@ -568,10 +569,10 @@ begin
 
   Purpose:   get objects
 
-  Remarks:   see http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?RESTObjectGET.html
-
+  Remarks:   see http://docs.aws.amazon.com/AmazonS3/latest/API/v2-RESTBucketGET.html
+  
              see http://code.google.com/p/plsql-utils/issues/detail?id=16
-
+  
              "I've rewritten get_object_list as an internal procedure that uses the "marker" parameter,
              so that get_object_tab can now call the Amazon API multiple times to return the complete set of objects.
              The get_object_list function remains functionally unchanged in this version - it just returns one set of objects -
@@ -585,7 +586,8 @@ begin
   MBR     15.01.2011  Created
   JKEMP   14.08.2012  Rewritten as private procedure, see remarks above
   TS      18.05.2015  Add p_protocol
-
+  KJS     06.10.2016  Modified to use newest S3 API which performs much better on large buckets. Changed for-loop to bulk operation.
+  
   */
 
   l_date_str := amazon_aws_auth_pkg.get_date_string;
@@ -606,38 +608,36 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
 
-  if p_more_marker is not null then
-    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?marker=' || p_more_marker || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+  if p_next_continuation_token is not null then
+    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?list-type=2&continuation-token=' || utl_url.escape(p_next_continuation_token) || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   else
-    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?list-type=2&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   end if;
-
   if (l_clob is not null) and (length(l_clob) > 0) then
 
     l_xml := xmltype (l_clob);
 
     check_for_errors (l_xml);
 
-    for l_rec in (
-      select extractValue(value(t), '*/Key', g_aws_namespace_s3_full) as key,
-        extractValue(value(t), '*/Size', g_aws_namespace_s3_full) as size_bytes,
-        extractValue(value(t), '*/LastModified', g_aws_namespace_s3_full) as last_modified
-      from table(xmlsequence(l_xml.extract('//ListBucketResult/Contents', g_aws_namespace_s3_full))) t
-      ) loop
-      l_count := l_count + 1;
-      l_returnvalue(l_count).key := l_rec.key;
-      l_returnvalue(l_count).size_bytes := l_rec.size_bytes;
-      l_returnvalue(l_count).last_modified := to_date(l_rec.last_modified, g_date_format_xml);
-    end loop;
-
-    -- check if this is the last set of data or not
-
-    l_xml := l_xml.extract('//ListBucketResult/IsTruncated/text()', g_aws_namespace_s3_full);
-
-    if l_xml is not null and l_xml.getStringVal = 'true' then
-      p_more_marker := l_returnvalue(l_returnvalue.last).key;
+    select extractValue(value(t), '*/Key', g_aws_namespace_s3_full),
+      extractValue(value(t), '*/Size', g_aws_namespace_s3_full),
+      to_date(extractValue(value(t), '*/LastModified', g_aws_namespace_s3_full), g_date_format_xml)
+    bulk collect into l_returnvalue
+    from table(xmlsequence(l_xml.extract('//ListBucketResult/Contents', g_aws_namespace_s3_full))) t;
+      
+    -- check if this is the last set of data or not, and set the in/out p_next_continuation_token as expected
+    l_xml_is_truncated := l_xml.extract('//ListBucketResult/IsTruncated/text()', g_aws_namespace_s3_full);
+    
+    if l_xml_is_truncated is not null and l_xml_is_truncated.getStringVal = 'true' then
+      l_xml_next_continuation := l_xml.extract('//ListBucketResult/NextContinuationToken/text()', g_aws_namespace_s3_full);
+      if l_xml_next_continuation is not null then
+        p_next_continuation_token := l_xml_next_continuation.getStringVal;
+      else
+        p_next_continuation_token := null;
+      end if;
+    else
+      p_next_continuation_token := null;
     end if;
-
   end if;
 
   p_list := l_returnvalue;
@@ -651,7 +651,7 @@ function get_object_list (p_bucket_name in varchar2,
                           p_protocol in varchar2 := 'http') return t_object_list
 as
   l_object_list                  t_object_list;
-  l_more_marker                  varchar2(4000);
+  l_next_continuation_token      varchar2(4000);
 begin
 
   /*
@@ -665,13 +665,13 @@ begin
   JKEMP   14.08.2012  Created
 
   */
-
+  
   get_object_list (
     p_bucket_name => p_bucket_name,
     p_prefix      => p_prefix,
     p_max_keys    => p_max_keys,
     p_list        => l_object_list,
-    p_more_marker => l_more_marker,--ignored by this function
+    p_next_continuation_token => l_next_continuation_token, --ignored by this function
     p_protocol    => p_protocol
   );
 
@@ -686,7 +686,7 @@ function get_object_tab (p_bucket_name in varchar2,
                          p_protocol in varchar2 := 'http') return t_object_tab pipelined
 as
   l_object_list                  t_object_list;
-  l_more_marker                  varchar2(4000);
+  l_next_continuation_token           varchar2(4000);
 begin
 
   /*
@@ -698,27 +698,26 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     19.01.2011  Created
-  TS      18.05.2015  Add p_protocol
 
   */
 
   loop
 
     get_object_list (
-      p_bucket_name => p_bucket_name,
-      p_prefix      => p_prefix,
-      p_max_keys    => p_max_keys,
-      p_list        => l_object_list,
-      p_more_marker => l_more_marker,
+      p_bucket_name             => p_bucket_name,
+      p_prefix                  => p_prefix,
+      p_max_keys                => p_max_keys,
+      p_list                    => l_object_list,
+      p_next_continuation_token => l_next_continuation_token,
       p_protocol    => p_protocol
       );
-
+  
     for i in 1 .. l_object_list.count loop
       pipe row (l_object_list(i));
     end loop;
-
-    exit when l_more_marker is null;
-
+    
+    exit when l_next_continuation_token is null;
+  
   end loop;
 
   return;
@@ -741,18 +740,18 @@ begin
 
   Purpose:   get download URL
 
-  Remarks:   see http://s3.amazonaws.com/doc/s3-developer-guide/RESTAuthentication.html
+  Remarks:   see http://s3.amazonaws.com/doc/s3-developer-guide/RESTAuthentication.html   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
-
+  
   */
-
+  
   l_epoch := amazon_aws_auth_pkg.get_epoch (p_expiry_date);
   l_signature := amazon_aws_auth_pkg.get_signature ('GET' || chr(10) || chr(10) || chr(10) || l_epoch || chr(10) || '/' || p_bucket_name || '/' || l_key);
-
-  l_returnvalue := get_url (p_bucket_name, l_key, p_protocol)
+  
+  l_returnvalue := get_url (p_bucket_name, l_key)
     || '?AWSAccessKeyId=' || amazon_aws_auth_pkg.get_aws_id
     || '&Expires=' || l_epoch
     || '&Signature=' || wwv_flow_utilities.url_encode2 (l_signature);
@@ -777,7 +776,7 @@ as
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
-
+  
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
@@ -792,12 +791,11 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     16.01.2011  Created
-  TS      18.05.2015  Add p_protocol
-
+  
   */
 
   l_date_str := amazon_aws_auth_pkg.get_date_string;
-
+  
   if p_acl is not null then
     l_auth_str := amazon_aws_auth_pkg.get_auth_string ('PUT' || chr(10) || chr(10) || p_content_type || chr(10) || l_date_str || chr(10) || 'x-amz-acl:' || p_acl || chr(10) || '/' || p_bucket_name || '/' || l_key);
   else
@@ -828,14 +826,14 @@ begin
   l_header_names(5) := 'Content-Length';
   l_header_values.extend;
   l_header_values(5) := dbms_lob.getlength(p_object);
-
+  
   if p_acl is not null then
     l_header_names.extend;
     l_header_names(6) := 'x-amz-acl';
     l_header_values.extend;
     l_header_values(6) := p_acl;
   end if;
-
+  
   l_clob := make_request (get_url (p_bucket_name, l_key, p_protocol), 'PUT', l_header_names, l_header_values, p_object);
 
   check_for_errors (l_clob);
@@ -855,7 +853,7 @@ as
 
   l_date_str                     varchar2(255);
   l_auth_str                     varchar2(255);
-
+  
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
 
@@ -865,18 +863,17 @@ begin
 
   Purpose:   delete object
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     18.01.2011  Created
-  TS      18.05.2015  Added p_protocol
-
+  
   */
-
+  
   l_date_str := amazon_aws_auth_pkg.get_date_string;
   l_auth_str := amazon_aws_auth_pkg.get_auth_string ('DELETE' || chr(10) || chr(10) || chr(10) || l_date_str || chr(10) || '/' || p_bucket_name || '/' || l_key);
-
+  
   l_header_names.extend;
   l_header_names(1) := 'Host';
   l_header_values.extend;
@@ -891,9 +888,9 @@ begin
   l_header_names(3) := 'Authorization';
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
-
+  
   l_clob := make_request (get_url(p_bucket_name, l_key, p_protocol), 'DELETE', l_header_names, l_header_values);
-
+  
   check_for_errors (l_clob);
 
 end delete_object;
@@ -910,13 +907,12 @@ begin
 
   Purpose:   get object
 
-  Remarks:
+  Remarks:   
 
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     20.01.2011  Created
-  TS      18.05.2015  Added p_protocol
-
+  
   */
 
   l_returnvalue := http_util_pkg.get_blob_from_url (get_download_url (p_bucket_name, p_key, sysdate + 1, p_protocol));
@@ -969,11 +965,11 @@ begin
   l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol), 'DELETE', l_header_names, l_header_values);
 
   l_endpoint := check_for_redirect (l_clob);
-
+  
   if l_endpoint is not null then
     l_clob := make_request ('http://' || l_endpoint || '/', 'DELETE', l_header_names, l_header_values);
   end if;
-
+  
   check_for_errors (l_clob);
 
 end delete_bucket;
@@ -983,7 +979,7 @@ function get_object_acl (p_bucket_name in varchar2,
                          p_key in varchar2,
                          p_protocol in varchar2 := 'http') return xmltype
 as
-
+                         
   l_clob                         clob;
   l_xml                          xmltype;
 
@@ -992,19 +988,19 @@ as
 
   l_header_names                 t_str_array := t_str_array();
   l_header_values                t_str_array := t_str_array();
-
+  
   l_returnvalue                  xmltype;
-
+  
 begin
 
   /*
 
   Purpose:   get object ACL
-
+  
   Remarks:  get the ACL for an object (private - used by get_object_owner, get_object_grantee_list, get_object_grantee_tab)
 
   Example return value:
-
+  
   <AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
     <Owner>
       <ID>c244a7539c1fc912a06691246c90cb93629690ee4703efac8f08e6ff4cb48ef1</ID>
@@ -1030,10 +1026,9 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   JKEMP   10.08.2012  Created
-  TS      18.05.2015  Added p_protocol
 
   */
-
+  
   l_date_str := amazon_aws_auth_pkg.get_date_string;
   l_auth_str := amazon_aws_auth_pkg.get_auth_string ('GET' || chr(10) || chr(10) || chr(10) || l_date_str || chr(10) || '/' || p_bucket_name || '/' || p_key || '?acl');
 
@@ -1084,17 +1079,16 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   JKEMP   14.08.2012  Created
-  TS      18.05.2015  Added p_protocol
 
   */
-
+  
   l_xml := get_object_acl (p_bucket_name, p_key, p_protocol);
-
+  
   l_returnvalue.user_id := l_xml.extract('//AccessControlPolicy/Owner/ID/text()', g_aws_namespace_s3_full).getStringVal;
   l_returnvalue.user_name := l_xml.extract('//AccessControlPolicy/Owner/DisplayName/text()', g_aws_namespace_s3_full).getStringVal;
-
+  
   return l_returnvalue;
-
+  
 end get_object_owner;
 
 
@@ -1120,10 +1114,9 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   JKEMP   14.08.2012  Created
-  TS      18.05.2015  Added p_protocol
 
   */
-
+  
   l_xml := get_object_acl (p_bucket_name, p_key, p_protocol);
 
   for l_rec in (
@@ -1141,7 +1134,7 @@ begin
     l_returnvalue(l_count).group_uri := l_rec.group_uri;
     l_returnvalue(l_count).permission := l_rec.permission;
   end loop;
-
+  
   return l_returnvalue;
 
 end get_object_grantee_list;
@@ -1163,10 +1156,9 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   JKEMP   14.08.2012  Created
-  TS      18.05.2015  Added p_protocol
 
   */
-
+  
   l_grantee_list := get_object_grantee_list (p_bucket_name, p_key, p_protocol);
 
   for i in 1 .. l_grantee_list.count loop
@@ -1174,7 +1166,7 @@ begin
   end loop;
 
   return;
-
+  
 end get_object_grantee_tab;
 
 
@@ -1201,7 +1193,6 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   JKEMP   22.09.2012  Created
-  TS      18.05.2015  Added p_protocol
 
   */
 
@@ -1234,7 +1225,6 @@ begin
 
 end set_object_acl;
 
-
 procedure set_wallet(p_wallet_path in varchar2,
                      p_wallet_password in varchar2)
 as
@@ -1257,5 +1247,7 @@ begin
 
 end set_wallet;
 
+
 end amazon_aws_s3_pkg;
 /
+

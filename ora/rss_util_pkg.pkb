@@ -39,7 +39,7 @@ begin
   */
   
   if p_format = g_format_rss then
-    l_returnvalue := to_char(p_date, g_date_format_rss);
+    l_returnvalue := to_char(p_date, g_date_format_rss,'NLS_DATE_LANGUAGE = ENGLISH');
   elsif p_format = g_format_rdf then
     l_returnvalue := to_char(p_date, g_date_format_rdf);
   elsif p_format = g_format_atom then
@@ -75,7 +75,7 @@ begin
   begin
     if p_format = g_format_rss then
       --l_returnvalue := to_date(p_date_str, g_date_format_rss);
-      l_returnvalue := to_date(substr(p_date_str,1,26), 'Dy, DD Mon YYYY HH24:MI:SS');
+      l_returnvalue := to_date(substr(p_date_str,1,26), 'Dy, DD Mon YYYY HH24:MI:SS','NLS_DATE_LANGUAGE = ENGLISH');
     elsif p_format = g_format_rdf then
       --l_returnvalue := to_date(p_date_str, g_date_format_rdf);
       l_returnvalue := to_date(substr(p_date_str,1,19), 'YYYY-MM-DD"T"HH24:MI:SS');

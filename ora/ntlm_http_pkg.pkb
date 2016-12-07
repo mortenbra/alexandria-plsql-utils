@@ -1,5 +1,13 @@
 create or replace package body ntlm_http_pkg
 as
+  c_blob                         constant number(1) := 0;
+  c_clob                         constant number(1) := 1;
+
+  type t_response_body is record (
+		l_blob                   blob,
+		l_clob                   clob,
+		l_blob_or_clob           number(1) default 1
+  );
 
   /*
  
@@ -51,17 +59,60 @@ begin
 end headers_contain_value;
 
 
-function get_response_clob (p_url in varchar2,
-                            p_username in varchar2,
-                            p_password in varchar2,
-                            p_wallet_path in varchar2 := null,
-                            p_wallet_password in varchar2 := null,
-                            p_proxy_server in varchar2 := null) return clob
+procedure get_response_body (p_resp in out utl_http.resp, p_response_body in out nocopy t_response_body)
+as
+  l_bdata       raw(32767);
+  l_cdata       string_util_pkg.t_max_pl_varchar2;
+begin
+  /*
+ 
+  Purpose:      get the response body as a blob
+   
+  Remarks:      
+   
+  Who     Date        Description
+  ------  ----------  --------------------------------
+  MBR     24.06.2011  Created
+  EAO     22.03.2015  Works with BLOBs
+   
+  */
+    
+  if p_response_body.l_blob_or_clob = c_blob then
+    begin
+      loop
+        utl_http.read_raw(r => p_resp, data => l_bdata);
+        dbms_lob.append( p_response_body.l_blob, to_blob( l_bdata ));
+      end loop;
+    exception
+      when utl_http.end_of_body then
+        null;
+    end;
+  else
+    begin
+      loop
+        utl_http.read_text(r => p_resp, data => l_cdata);
+        p_response_body.l_clob := p_response_body.l_clob || l_cdata;
+      end loop;
+    exception
+      when utl_http.end_of_body then
+        null;
+    end;
+  end if;
+end get_response_body;
+
+
+procedure get_response (p_url in varchar2,
+                        p_username in varchar2,
+                        p_password in varchar2,
+                        p_wallet_path in varchar2 := null,
+                        p_wallet_password in varchar2 := null,
+                        p_proxy_server in varchar2 := null,
+                        p_response_body in out nocopy t_response_body)
 as
 
   l_req                          utl_http.req;
   l_resp                         utl_http.resp;
-  l_returnvalue                  clob;
+  l_returnvalue                  blob;
   
   l_authenticate_with_ntlm       boolean;
   
@@ -76,59 +127,13 @@ as
   l_negotiate_flags              raw(4000);
 
   l_authenticate_message         varchar2(500);
-
-
-  function get_response_body (p_resp in out utl_http.resp) return clob
-  as
-    l_data        string_util_pkg.t_max_pl_varchar2;
-    l_returnvalue clob;
-  begin
-
-    /*
-   
-    Purpose:      get the response body as a clob
-   
-    Remarks:      
-   
-    Who     Date        Description
-    ------  ----------  --------------------------------
-    MBR     24.06.2011  Created
-   
-    */
-    
-    begin
-      loop
-        utl_http.read_text(r => p_resp, data => l_data);
-        l_returnvalue := l_returnvalue || l_data;
-      end loop;
-    exception
-      when utl_http.end_of_body then
-        null;
-    end;
-      
-    return l_returnvalue;
-
-  end get_response_body;
-
-
+  
   procedure debug_response (p_resp in out utl_http.resp)
   as
     l_name  varchar2(255);
     l_value varchar2(2000);
     l_body  clob;
   begin
-
-    /*
-   
-    Purpose:      print debug info about the response
-   
-    Remarks:      
-   
-    Who     Date        Description
-    ------  ----------  --------------------------------
-    MBR     24.06.2011  Created
-   
-    */
 
     debug_pkg.printf('Response Status Code: %1', p_resp.status_code);
 
@@ -137,7 +142,7 @@ as
       debug_pkg.printf('#%1 %2 : %3', i, l_name, l_value);
     end loop;
       
-    l_returnvalue := get_response_body (p_resp);
+    get_response_body (p_resp, p_response_body);
 
     debug_pkg.printf('Body length = %1', dbms_lob.getlength (l_returnvalue));
     debug_pkg.printf('Persistent connection count: %1', utl_http.get_persistent_conn_count);
@@ -146,7 +151,6 @@ as
   
 
 begin
-
   /*
  
   Purpose:      Get response clob from URL
@@ -268,9 +272,72 @@ begin
   utl_http.close_persistent_conns;
   debug_pkg.printf('Persistent connection count (should be zero): %1', utl_http.get_persistent_conn_count);
 
-  return l_returnvalue;
-  
+end get_response;
 
+
+function get_response_blob (p_url in varchar2,
+                            p_username in varchar2,
+                            p_password in varchar2,
+                            p_wallet_path in varchar2 := null,
+                            p_wallet_password in varchar2 := null,
+                            p_proxy_server in varchar2 := null) return blob
+as
+  l_response_body       t_response_body;
+begin
+
+  /*
+ 
+  Purpose:      Get response clob from URL
+ 
+  Remarks:      see http://davenport.sourceforge.net/ntlm.html#ntlmHttpAuthentication
+ 
+  Who     Date        Description
+  ------  ----------  --------------------------------
+  FDL     11.05.2011  Created
+  MBR     03.06.2011  Lots of changes
+  EAO     22.03.2015  Most functionality moved to get_response
+ 
+  */
+  
+  dbms_lob.createtemporary( l_response_body.l_blob, true);
+  l_response_body.l_blob_or_clob := c_blob;
+  get_response(
+    p_url             => get_response_blob.p_url,
+    p_username        => get_response_blob.p_username,
+    p_password        => get_response_blob.p_password,
+    p_wallet_path     => get_response_blob.p_wallet_path,
+    p_wallet_password => get_response_blob.p_wallet_password,
+    p_proxy_server    => get_response_blob.p_proxy_server,
+    p_response_body   => l_response_body);
+
+  return l_response_body.l_blob;
+
+end get_response_blob;
+
+
+function get_response_clob (p_url in varchar2,
+                            p_username in varchar2,
+                            p_password in varchar2,
+                            p_wallet_path in varchar2 := null,
+                            p_wallet_password in varchar2 := null,
+                            p_proxy_server in varchar2 := null) return clob
+as
+  l_response_body       t_response_body;
+begin
+  dbms_lob.createtemporary( l_response_body.l_clob, true);
+  l_response_body.l_blob_or_clob := c_clob;
+  
+  get_response(
+    p_url             => get_response_clob.p_url,
+    p_username        => get_response_clob.p_username,
+    p_password        => get_response_clob.p_password,
+    p_wallet_path     => get_response_clob.p_wallet_path,
+    p_wallet_password => get_response_clob.p_wallet_password,
+    p_proxy_server    => get_response_clob.p_proxy_server,
+    p_response_body   => l_response_body);
+
+  return l_response_body.l_clob;
+  
 end get_response_clob;
 
 
@@ -473,4 +540,3 @@ end end_request;
 
 end ntlm_http_pkg;
 /
-

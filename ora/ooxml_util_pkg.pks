@@ -77,7 +77,18 @@ as
   );
 
   type t_xlsx_sheet is table of t_xlsx_cell index by varchar2(20);
-
+  
+  type t_xlsx_sheet_attributes is record (
+      r_id    varchar2(255),
+      sheetid number,
+      name    varchar2(31)
+  );
+  
+  type t_xlsx_sheet_properties is table of t_xlsx_sheet_attributes index by pls_integer;
+  
+  -- get list of xlsx worksheets
+  function get_worksheets_list( p_xlsx in blob ) return t_xlsx_sheet_properties;
+  
   -- get docx properties
   function get_docx_properties (p_docx in blob) return t_docx_properties;
 

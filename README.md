@@ -75,7 +75,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Parse JSON using PL/SQL
 
-  * http://sourceforge.net/projects/pljson/
+  * https://github.com/pljson/pljson
   * http://reseau.erasme.org/pl-sql-library-for-JSON?lang=en
 
 
@@ -250,8 +250,8 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Miscellaneous utilities and demos
 
-  * http://www.toadworld.com/Portals/0/stevenf/demo.zip
-  * http://www.toadworld.com/ORACLE/StevenFeuersteinsPLSQLObsession/tabid/153/Default.aspx
+  * http://www.oracle.com/webfolder/technetwork/tutorials/plsql/sfdemo.zip
+  * http://www.toadworld.com/platforms/oracle/w/wiki/8243.plsql-obsession
 
 ##PL/SQL Frameworks
 
