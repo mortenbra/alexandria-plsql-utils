@@ -10,13 +10,13 @@ as
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     19.09.2006  Created
-
+  NN      19.01.2017  New function that returns day of the week
   */
   
   g_date_fmt_date                constant varchar2(30) := 'dd.mm.yyyy';
   g_date_fmt_date_hour_min       constant varchar2(30) := 'dd.mm.yyyy hh24:mi';
   g_date_fmt_date_hour_min_sec   constant varchar2(30) := 'dd.mm.yyyy hh24:mi:ss';
-
+  g_date_fmt_day                 constant varchar2(30) := 'day';
   g_months_in_quarter            constant number := 3;
   g_months_in_year               constant number := 12;
 
@@ -107,6 +107,10 @@ as
   function get_date_tab (p_calendar_string in varchar2,
                          p_from_date in date := null,
                          p_to_date in date := null) return t_date_array pipelined;
-
+  
+  -- get week day name
+  function fmt_day (p_date in date) return varchar2;
+  
+  
 end date_util_pkg;
 /
