@@ -1,7 +1,7 @@
 # alexandria-plsql-utils
 Oracle PL/SQL Utility Library
 
-<img src="http://plsql-utils.googlecode.com/files/alexandria-logo.jpg">
+![](alexandria-logo.jpg)
 
 This library is a collection of various utility packages for PL/SQL, as well as links to useful libraries hosted and maintained elsewhere.
 
