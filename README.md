@@ -9,8 +9,8 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 ##Generate PDF files using PL/SQL
 
 
-  * http://technology.amis.nl/2012/04/11/generating-a-pdf-document-with-some-plsql-as_pdf_mini-as_pdf3/
-  * http://technology.amis.nl/blog/8650/as_pdf-generating-a-pdf-document-with-some-plsql
+  * https://technology.amis.nl/2012/04/11/generating-a-pdf-document-with-some-plsql-as_pdf_mini-as_pdf3/
+  * https://technology.amis.nl/2010/10/20/as_pdf-generating-a-pdf-document-with-some-plsql/
   * http://www.erasme.org/PL-FPDF,1337?lang=en
   * http://ora-00001.blogspot.com/2009/10/free-pdf-package-for-plsql.html
   * http://sourceforge.net/projects/pljrxml2pdf/
@@ -21,7 +21,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Generate Excel files using PL/SQL
 
-  * http://technology.amis.nl/blog/10995/create-an-excel-file-with-plsql
+  * https://technology.amis.nl/2011/02/19/create-an-excel-file-with-plsql/
   * http://www.jasonsdevelopercorner.com/?page_id=8
   * https://xml-spreadsheet.samplecode.oracle.com/
   * http://sanjeev-oracle-world.blogspot.com/2007/06/create-excel-workbook-by-plsql-code.html
@@ -39,7 +39,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/X-office-document.svg/48px-X-office-document.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/07/X-office-presentation.svg/48px-X-office-presentation.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/X-office-spreadsheet.svg/48px-X-office-spreadsheet.svg.png" align="right" /><br>
 
   * http://ora-00001.blogspot.com/2011/02/working-with-office-2007-ooxml-files.html
-  * http://technology.amis.nl/blog/8090/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql
+  * https://technology.amis.nl/2010/06/09/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql/
   * http://www.docufy.be/
   * OOXML_UTIL_PKG
 
@@ -47,7 +47,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/The_Unarchiver_zip.png/64px-The_Unarchiver_zip.png" align="right" /><br>
 
-  * http://technology.amis.nl/blog/7626/utl_compress-gzip-and-zlib
+  * https://technology.amis.nl/2010/03/13/utl_compress-gzip-and-zlib/
   * ZIP_UTIL_PKG
 
 ##Generate and parse CSV files using PL/SQL
