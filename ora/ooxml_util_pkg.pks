@@ -107,7 +107,7 @@ as
   function get_xlsx_column_number (p_column_ref in varchar2) return number;
 
   -- get column reference from column number
-  function get_xlsx_column_ref (p_column_number in varchar2) return varchar2;
+  function get_xlsx_column_ref (p_column_number in number) return varchar2;
 
   -- get cell value from XLSX file
   function get_xlsx_cell_value (p_xlsx in blob,
@@ -149,4 +149,3 @@ as
 
 end ooxml_util_pkg;
 /
-
