@@ -264,7 +264,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Unit Testing Frameworks for PL/SQL
 
-  * http://sourceforge.net/projects/utplsql/
+  * https://utplsql.github.io/ (version 3 beta)
   * http://code.google.com/p/pluto-test-framework/
 
 ##Documentation Generators (JavaDoc-style)
