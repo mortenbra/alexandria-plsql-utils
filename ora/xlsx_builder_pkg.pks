@@ -6,6 +6,7 @@ as
 ** Date: 19-02-2011
 ** Website: http://technology.amis.nl/blog
 ** See also: http://technology.amis.nl/blog/?p=10995
+** See also: https://technology.amis.nl/2011/02/19/create-an-excel-file-with-plsql/
 **
 ** Changelog:
 **   Date: 21-02-2011
@@ -18,7 +19,43 @@ as
 **     Fixed issue with timezone's set to a region(name) instead of a offset
 **   Date: 08-04-2011
 **     Fixed issue with XML-escaping from text
+**   Date: 27-05-2011
+**     Added MIT-license
+**   Date: 11-08-2011
+**     Fixed NLS-issue with column width
+**   Date: 29-09-2011
+**     Added font color
+**   Date: 16-10-2011
+**     fixed bug in add_string
+**   Date: 26-04-2012
+**     Fixed set_autofilter (only one autofilter per sheet, added _xlnm._FilterDatabase)
+**     Added list_validation = drop-down 
+**   Date: 27-08-2013
+**     Added freeze_pane
 **
+******************************************************************************
+******************************************************************************
+Copyright (C) 2011, 2012 by Anton Scheffer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+******************************************************************************
 ******************************************** */
 --
   type tp_alignment is record
@@ -45,6 +82,7 @@ as
     , p_underline boolean := false
     , p_italic boolean := false
     , p_bold boolean := false
+    , p_rgb varchar2 := null -- this is a hex ALPHA Red Green Blue value
     )
   return pls_integer;
 --
@@ -164,6 +202,45 @@ top
     , p_sheet pls_integer := null
     );
 --
+  procedure list_validation
+    ( p_sqref_col pls_integer
+    , p_sqref_row pls_integer
+    , p_tl_col pls_integer -- top left
+    , p_tl_row pls_integer
+    , p_br_col pls_integer -- bottom right
+    , p_br_row pls_integer
+    , p_style varchar2 := 'stop' -- stop, warning, information
+    , p_title varchar2 := null
+    , p_prompt varchar := null
+    , p_show_error boolean := false
+    , p_error_title varchar2 := null
+    , p_error_txt varchar2 := null
+    , p_sheet pls_integer := null
+    );
+--
+  procedure list_validation
+    ( p_sqref_col pls_integer
+    , p_sqref_row pls_integer
+    , p_defined_name varchar2
+    , p_style varchar2 := 'stop' -- stop, warning, information
+    , p_title varchar2 := null
+    , p_prompt varchar := null
+    , p_show_error boolean := false
+    , p_error_title varchar2 := null
+    , p_error_txt varchar2 := null
+    , p_sheet pls_integer := null
+    );
+--
+  procedure defined_name
+    ( p_tl_col pls_integer -- top left
+    , p_tl_row pls_integer
+    , p_br_col pls_integer -- bottom right
+    , p_br_row pls_integer
+    , p_name varchar2
+    , p_sheet pls_integer := null
+    , p_localsheet pls_integer := null
+    );
+--
   procedure set_column_width
     ( p_col pls_integer
     , p_width number
@@ -200,6 +277,12 @@ top
     , p_sheet pls_integer := null
     );
 --
+  procedure freeze_pane
+    ( p_col pls_integer
+    , p_row pls_integer
+    , p_sheet pls_integer := null
+    );
+--
   procedure set_autofilter
     ( p_column_start pls_integer := null
     , p_column_end pls_integer := null
@@ -223,8 +306,5 @@ top
     , p_filename varchar2 := null
     , p_sheet pls_integer := null
     );
---
-
-end xlsx_builder_pkg;
+end;
 /
-
