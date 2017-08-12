@@ -36,7 +36,10 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Working with Office 2007 (OOXML) files using PL/SQL
 
-<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/X-office-document.svg/48px-X-office-document.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/07/X-office-presentation.svg/48px-X-office-presentation.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/X-office-spreadsheet.svg/48px-X-office-spreadsheet.svg.png" align="right" /><br>
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/X-office-document.svg/48px-X-office-document.svg.png" align="right" />
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/07/X-office-presentation.svg/48px-X-office-presentation.svg.png" align="right" />
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/X-office-spreadsheet.svg/48px-X-office-spreadsheet.svg.png" align="right" />
+<br>
 
   * http://ora-00001.blogspot.com/2011/02/working-with-office-2007-ooxml-files.html
   * https://technology.amis.nl/2010/06/09/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql/
@@ -121,7 +124,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 ##Integrate with Amazon web services (Simple Storage Service S3) using PL/SQL
 
-<img src="http://upload.wikimedia.org/wikipedia/en/thumb/1/1d/AmazonWebservices_Logo.svg/250px-AmazonWebservices_Logo.svg.png" align="right" /><br>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/AmazonWebservices_Logo.svg/200px-AmazonWebservices_Logo.svg.png" align="right" /><br>
 
   * http://ora-00001.blogspot.com/2011/03/amazon-s3-api-for-plsql.html
   * http://jastraub.blogspot.com/2011/01/building-amazon-s3-client-with.html
