@@ -40,6 +40,7 @@ prompt Creating package specifications
 @../ora/raw_util_pkg.pks
 @../ora/regexp_util_pkg.pks
 @../ora/rss_util_pkg.pks
+@../ora/slack_util_pkg.pks
 @../ora/sms_util_pkg.pks
 @../ora/soap_server_pkg.pks
 @../ora/sql_builder_pkg.pks
@@ -92,6 +93,7 @@ prompt Creating package bodies
 @../ora/raw_util_pkg.pkb
 @../ora/regexp_util_pkg.pkb
 @../ora/rss_util_pkg.pkb
+@../ora/slack_util_pkg.pkb
 @../ora/sms_util_pkg.pkb
 @../ora/soap_server_pkg.pkb
 @../ora/sql_builder_pkg.pkb
