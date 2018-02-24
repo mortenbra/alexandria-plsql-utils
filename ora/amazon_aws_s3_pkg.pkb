@@ -238,7 +238,8 @@ end make_request;
 
 
 function get_url (p_bucket_name in varchar2,
-                  p_key in varchar2 := null) return varchar2
+                  p_key in varchar2 := null,
+                  p_protocol in varchar2 := 'http') return varchar2
 as
   l_returnvalue varchar2(4000);
 begin
@@ -252,10 +253,15 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     03.03.2011  Created
+  TS      18.05.2015  Add p_protocol
   
   */
 
-  l_returnvalue := 'http://' || p_bucket_name || '.' || g_aws_host_s3 || '/' || p_key;
+  if lower(p_protocol) not in ('http', 'https') then
+    raise_error('Unsupported value for p_protocol: "' || p_protocol || '". Must be either "http" or "https".');
+  end if;
+
+  l_returnvalue := lower(p_protocol) || '://' || p_bucket_name || '.' || g_aws_host_s3 || '/' || p_key;
   
   return l_returnvalue;
   
@@ -386,7 +392,8 @@ end get_bucket_tab;
 
 
 procedure new_bucket (p_bucket_name in varchar2,
-                      p_region in varchar2 := null)
+                      p_region in varchar2 := null,
+                      p_protocol in varchar2 := 'http')
 as
 
   l_request_body                 clob;
@@ -412,6 +419,7 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
+  TS      18.05.2015  Add p_protocol
   
   */
   
@@ -454,14 +462,15 @@ begin
 
   end if;
 
-  l_clob := make_request (get_url (p_bucket_name), 'PUT', l_header_names, l_header_values, null, l_request_body);
+  l_clob := make_request (get_url (p_bucket_name => p_bucket_name, p_protocol => p_protocol), 'PUT', l_header_names, l_header_values, null, l_request_body);
   
   check_for_errors (l_clob);
 
 end new_bucket;
 
 
-function get_bucket_region (p_bucket_name in varchar2) return varchar2
+function get_bucket_region (p_bucket_name in varchar2,
+                            p_protocol in varchar2 := 'http') return varchar2
 as
 
   l_clob                         clob;
@@ -488,6 +497,7 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     03.03.2011  Created
+  TS      18.05.2015  Add p_protocol
   
   */
 
@@ -509,7 +519,7 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
 
-  l_clob := make_request (get_url(p_bucket_name) || '?location', 'GET', l_header_names, l_header_values);
+  l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?location', 'GET', l_header_names, l_header_values);
 
   if (l_clob is not null) and (length(l_clob) > 0) then
   
@@ -533,11 +543,12 @@ begin
 end get_bucket_region;
 
 
-procedure get_object_list (p_bucket_name                 in varchar2,
-                           p_prefix                      in varchar2,
-                           p_max_keys                    in number,
-                           p_list                       out t_object_list,
-                           p_next_continuation_token in out varchar2)
+procedure get_object_list (p_bucket_name in varchar2,
+                           p_prefix in varchar2,
+                           p_max_keys in number,
+                           p_list out t_object_list,
+                           p_next_continuation_token in out varchar2,
+                           p_protocol in varchar2 := 'http')
 as
   l_clob                         clob;
   l_xml                          xmltype;
@@ -574,8 +585,9 @@ begin
   ------  ----------  -------------------------------------
   MBR     15.01.2011  Created
   JKEMP   14.08.2012  Rewritten as private procedure, see remarks above
+  TS      18.05.2015  Add p_protocol
   KJS     06.10.2016  Modified to use newest S3 API which performs much better on large buckets. Changed for-loop to bulk operation.
-
+  
   */
 
   l_date_str := amazon_aws_auth_pkg.get_date_string;
@@ -597,9 +609,9 @@ begin
   l_header_values(3) := l_auth_str;
 
   if p_next_continuation_token is not null then
-    l_clob := make_request (get_url(p_bucket_name) || '?list-type=2&continuation-token=' || utl_url.escape(p_next_continuation_token) || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?list-type=2&continuation-token=' || utl_url.escape(p_next_continuation_token) || '&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   else
-    l_clob := make_request (get_url(p_bucket_name) || '?list-type=2&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
+    l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol) || '?list-type=2&max-keys=' || p_max_keys || '&prefix=' || utl_url.escape(p_prefix), 'GET', l_header_names, l_header_values, null);
   end if;
   if (l_clob is not null) and (length(l_clob) > 0) then
 
@@ -635,7 +647,8 @@ end get_object_list;
 
 function get_object_list (p_bucket_name in varchar2,
                           p_prefix in varchar2 := null,
-                          p_max_keys in number := null) return t_object_list
+                          p_max_keys in number := null,
+                          p_protocol in varchar2 := 'http') return t_object_list
 as
   l_object_list                  t_object_list;
   l_next_continuation_token      varchar2(4000);
@@ -654,11 +667,12 @@ begin
   */
   
   get_object_list (
-    p_bucket_name             => p_bucket_name,
-    p_prefix                  => p_prefix,
-    p_max_keys                => p_max_keys,
-    p_list                    => l_object_list,
-    p_next_continuation_token => l_next_continuation_token --ignored by this function
+    p_bucket_name => p_bucket_name,
+    p_prefix      => p_prefix,
+    p_max_keys    => p_max_keys,
+    p_list        => l_object_list,
+    p_next_continuation_token => l_next_continuation_token, --ignored by this function
+    p_protocol    => p_protocol
   );
 
   return l_object_list;
@@ -668,7 +682,8 @@ end get_object_list;
 
 function get_object_tab (p_bucket_name in varchar2,
                          p_prefix in varchar2 := null,
-                         p_max_keys in number := null) return t_object_tab pipelined
+                         p_max_keys in number := null,
+                         p_protocol in varchar2 := 'http') return t_object_tab pipelined
 as
   l_object_list                  t_object_list;
   l_next_continuation_token           varchar2(4000);
@@ -693,7 +708,8 @@ begin
       p_prefix                  => p_prefix,
       p_max_keys                => p_max_keys,
       p_list                    => l_object_list,
-      p_next_continuation_token => l_next_continuation_token
+      p_next_continuation_token => l_next_continuation_token,
+      p_protocol    => p_protocol
       );
   
     for i in 1 .. l_object_list.count loop
@@ -711,7 +727,8 @@ end get_object_tab;
 
 function get_download_url (p_bucket_name in varchar2,
                            p_key in varchar2,
-                           p_expiry_date in date) return varchar2
+                           p_expiry_date in date,
+                           p_protocol in varchar2 := 'http') return varchar2
 as
   l_returnvalue                  varchar2(4000);
   l_key                          varchar2(4000) := utl_url.escape (p_key);
@@ -748,7 +765,8 @@ procedure new_object (p_bucket_name in varchar2,
                       p_key in varchar2,
                       p_object in blob,
                       p_content_type in varchar2,
-                      p_acl in varchar2 := null)
+                      p_acl in varchar2 := null,
+                      p_protocol in varchar2 := 'http')
 as
 
   l_key                          varchar2(4000) := utl_url.escape (p_key);
@@ -816,7 +834,7 @@ begin
     l_header_values(6) := p_acl;
   end if;
   
-  l_clob := make_request (get_url (p_bucket_name, l_key), 'PUT', l_header_names, l_header_values, p_object);
+  l_clob := make_request (get_url (p_bucket_name, l_key, p_protocol), 'PUT', l_header_names, l_header_values, p_object);
 
   check_for_errors (l_clob);
 
@@ -824,7 +842,8 @@ end new_object;
 
 
 procedure delete_object (p_bucket_name in varchar2,
-                         p_key in varchar2)
+                         p_key in varchar2,
+                         p_protocol in varchar2 := 'http')
 as
 
   l_key                          varchar2(4000) := utl_url.escape (p_key);
@@ -870,7 +889,7 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
   
-  l_clob := make_request (get_url(p_bucket_name, l_key), 'DELETE', l_header_names, l_header_values);
+  l_clob := make_request (get_url(p_bucket_name, l_key, p_protocol), 'DELETE', l_header_names, l_header_values);
   
   check_for_errors (l_clob);
 
@@ -878,7 +897,8 @@ end delete_object;
 
 
 function get_object (p_bucket_name in varchar2,
-                     p_key in varchar2) return blob
+                     p_key in varchar2,
+                     p_protocol in varchar2 := 'http') return blob
 as
   l_returnvalue blob;
 begin
@@ -895,14 +915,14 @@ begin
   
   */
 
-  l_returnvalue := http_util_pkg.get_blob_from_url (get_download_url (p_bucket_name, p_key, sysdate + 1));
+  l_returnvalue := http_util_pkg.get_blob_from_url (get_download_url (p_bucket_name, p_key, sysdate + 1, p_protocol));
 
   return l_returnvalue;
 
 end get_object;
 
 
-procedure delete_bucket (p_bucket_name in varchar2)
+procedure delete_bucket (p_bucket_name in varchar2, p_protocol in varchar2 := 'http')
 as
   l_clob                         clob;
   l_date_str                     varchar2(255);
@@ -942,7 +962,7 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
 
-  l_clob := make_request (get_url(p_bucket_name), 'DELETE', l_header_names, l_header_values);
+  l_clob := make_request (get_url(p_bucket_name => p_bucket_name, p_protocol => p_protocol), 'DELETE', l_header_names, l_header_values);
 
   l_endpoint := check_for_redirect (l_clob);
   
@@ -956,7 +976,8 @@ end delete_bucket;
 
 
 function get_object_acl (p_bucket_name in varchar2,
-                         p_key in varchar2) return xmltype
+                         p_key in varchar2,
+                         p_protocol in varchar2 := 'http') return xmltype
 as
                          
   l_clob                         clob;
@@ -1026,7 +1047,7 @@ begin
   l_header_values.extend;
   l_header_values(3) := l_auth_str;
 
-  l_clob := make_request (get_url(p_bucket_name, p_key) || '?acl', 'GET', l_header_names, l_header_values, null);
+  l_clob := make_request (get_url(p_bucket_name, p_key, p_protocol) || '?acl', 'GET', l_header_names, l_header_values, null);
 
   if (l_clob is not null) and (length(l_clob) > 0) then
 
@@ -1042,7 +1063,8 @@ end get_object_acl;
 
 
 function get_object_owner (p_bucket_name in varchar2,
-                           p_key in varchar2) return t_owner
+                           p_key in varchar2,
+                           p_protocol in varchar2 := 'http') return t_owner
 as
   l_xml                          xmltype;
   l_returnvalue                  t_owner;
@@ -1060,7 +1082,7 @@ begin
 
   */
   
-  l_xml := get_object_acl (p_bucket_name, p_key);
+  l_xml := get_object_acl (p_bucket_name, p_key, p_protocol);
   
   l_returnvalue.user_id := l_xml.extract('//AccessControlPolicy/Owner/ID/text()', g_aws_namespace_s3_full).getStringVal;
   l_returnvalue.user_name := l_xml.extract('//AccessControlPolicy/Owner/DisplayName/text()', g_aws_namespace_s3_full).getStringVal;
@@ -1071,7 +1093,8 @@ end get_object_owner;
 
 
 function get_object_grantee_list (p_bucket_name in varchar2,
-                                  p_key in varchar2) return t_grantee_list
+                                  p_key in varchar2,
+                                  p_protocol in varchar2 := 'http') return t_grantee_list
 as
   l_xml_namespace_s3_full        constant varchar2(255) := 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"';
   l_xml                          xmltype;
@@ -1094,7 +1117,7 @@ begin
 
   */
   
-  l_xml := get_object_acl (p_bucket_name, p_key);
+  l_xml := get_object_acl (p_bucket_name, p_key, p_protocol);
 
   for l_rec in (
     select extractValue(value(t), '*/Grantee/@xsi:type', g_aws_namespace_s3_full || ' ' || l_xml_namespace_s3_full) as grantee_type,
@@ -1118,7 +1141,8 @@ end get_object_grantee_list;
 
 
 function get_object_grantee_tab (p_bucket_name in varchar2,
-                                 p_key in varchar2) return t_grantee_tab pipelined
+                                 p_key in varchar2,
+                                 p_protocol in varchar2 := 'http') return t_grantee_tab pipelined
 as
   l_grantee_list  t_grantee_list;
 begin
@@ -1135,7 +1159,7 @@ begin
 
   */
   
-  l_grantee_list := get_object_grantee_list (p_bucket_name, p_key);
+  l_grantee_list := get_object_grantee_list (p_bucket_name, p_key, p_protocol);
 
   for i in 1 .. l_grantee_list.count loop
     pipe row (l_grantee_list(i));
@@ -1148,7 +1172,8 @@ end get_object_grantee_tab;
 
 procedure set_object_acl (p_bucket_name in varchar2,
                           p_key in varchar2,
-                          p_acl in varchar2)
+                          p_acl in varchar2,
+                          p_protocol in varchar2 := 'http')
 as
   l_key                          varchar2(4000) := utl_url.escape (p_key);
   l_clob                         clob;
@@ -1194,11 +1219,33 @@ begin
   l_header_values.extend;
   l_header_values(4) := p_acl;
 
-  l_clob := make_request (get_url(p_bucket_name, l_key) || '?acl', 'PUT', l_header_names, l_header_values);
+  l_clob := make_request (get_url(p_bucket_name, l_key, p_protocol) || '?acl', 'PUT', l_header_names, l_header_values);
 
   check_for_errors (l_clob);
 
 end set_object_acl;
+
+procedure set_wallet(p_wallet_path in varchar2,
+                     p_wallet_password in varchar2)
+as
+begin
+
+  /*
+
+  Purpose:   Set up the wallet for https requests
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  TS     15.01.2011  Created
+
+  */
+
+  utl_http.set_wallet(
+      path     => p_wallet_path
+    , password => p_wallet_password
+    );
+
+end set_wallet;
 
 
 end amazon_aws_s3_pkg;
