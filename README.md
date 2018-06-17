@@ -6,7 +6,7 @@ Oracle PL/SQL Utility Library
 This library is a collection of various utility packages for PL/SQL, as well as links to useful libraries hosted and maintained elsewhere.
 
 
-##Generate PDF files using PL/SQL
+## Generate PDF files using PL/SQL
 
 
   * https://technology.amis.nl/2012/04/11/generating-a-pdf-document-with-some-plsql-as_pdf_mini-as_pdf3/
@@ -19,7 +19,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * PDFGEN_PKG
 
 
-##Generate Excel files using PL/SQL
+## Generate Excel files using PL/SQL
 
   * https://technology.amis.nl/2011/02/19/create-an-excel-file-with-plsql/
   * http://www.jasonsdevelopercorner.com/?page_id=8
@@ -30,27 +30,30 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * XLSX_BUILDER_PKG
   * SYLK_UTIL_PKG
 
-##Generate RTF files using PL/SQL
+## Generate RTF files using PL/SQL
 
   * http://monkeyonoracle.blogspot.com/2009/07/dynamic-rtf-documents-revisited.html
 
-##Working with Office 2007 (OOXML) files using PL/SQL
+## Working with Office 2007 (OOXML) files using PL/SQL
 
-<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/X-office-document.svg/48px-X-office-document.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/07/X-office-presentation.svg/48px-X-office-presentation.svg.png" align="right" /><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/X-office-spreadsheet.svg/48px-X-office-spreadsheet.svg.png" align="right" /><br>
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/X-office-document.svg/48px-X-office-document.svg.png" align="right" />
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/0/07/X-office-presentation.svg/48px-X-office-presentation.svg.png" align="right" />
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/X-office-spreadsheet.svg/48px-X-office-spreadsheet.svg.png" align="right" />
+<br>
 
   * http://ora-00001.blogspot.com/2011/02/working-with-office-2007-ooxml-files.html
   * https://technology.amis.nl/2010/06/09/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql/
   * http://www.docufy.be/
   * OOXML_UTIL_PKG
 
-##Zip and unzip files using PL/SQL
+## Zip and unzip files using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/The_Unarchiver_zip.png/64px-The_Unarchiver_zip.png" align="right" /><br>
 
   * https://technology.amis.nl/2010/03/13/utl_compress-gzip-and-zlib/
   * ZIP_UTIL_PKG
 
-##Generate and parse CSV files using PL/SQL
+## Generate and parse CSV files using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/3/38/CsvDelimited001.svg/113px-CsvDelimited001.svg.png" align="right" /><br>
 
@@ -58,7 +61,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * CSV_UTIL_PKG
 
 
-##Generate and parse RSS feeds using PL/SQL
+## Generate and parse RSS feeds using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Feed-icon.svg/75px-Feed-icon.svg.png" align="right" /><br>
 
@@ -67,25 +70,25 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * RSS_UTIL_PKG
 
 
-##Generate JSON using PL/SQL
+## Generate JSON using PL/SQL
 
   * http://ora-00001.blogspot.com/2010/02/ref-cursor-to-json.html
   * JSON_UTIL_PKG
 
 
-##Parse JSON using PL/SQL
+## Parse JSON using PL/SQL
 
   * https://github.com/pljson/pljson
   * http://reseau.erasme.org/pl-sql-library-for-JSON?lang=en
 
 
-##Transfer files (FTP) using PL/SQL
+## Transfer files (FTP) using PL/SQL
 
   * http://www.oracle-base.com/articles/misc/FTPFromPLSQL.php
   * FTP_UTIL_PKG
 
 
-##Send email (SMTP) using PL/SQL
+## Send email (SMTP) using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Arobaze.svg/75px-Arobaze.svg.png" align="right" /><br>
 
@@ -94,12 +97,12 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * MAIL_UTIL_PKG
 
 
-##Receive email (POP3) using PL/SQL
+## Receive email (POP3) using PL/SQL
 
   * POP3_UTIL_PKG
 
 
-##Receive email (POP3 and IMAP) using PL/SQL (and Java)
+## Receive email (POP3 and IMAP) using PL/SQL (and Java)
 
   * http://plsqlmailclient.sourceforge.net/
 
@@ -109,7 +112,7 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * MS_EWS_UTIL_PKG
 
 
-##Integrate with Google services (Google Maps, Google Calendar, Google Translate) using PL/SQL
+## Integrate with Google services (Google Maps, Google Calendar, Google Translate) using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Googlelogo.png/200px-Googlelogo.png" align="right" /><br>
 
@@ -119,28 +122,28 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * GOOGLE_MAPS_PKG
   * GOOGLE_TRANSLATE_PKG
 
-##Integrate with Amazon web services (Simple Storage Service S3) using PL/SQL
+## Integrate with Amazon web services (Simple Storage Service S3) using PL/SQL
 
-<img src="http://upload.wikimedia.org/wikipedia/en/thumb/1/1d/AmazonWebservices_Logo.svg/250px-AmazonWebservices_Logo.svg.png" align="right" /><br>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/AmazonWebservices_Logo.svg/200px-AmazonWebservices_Logo.svg.png" align="right" /><br>
 
   * http://ora-00001.blogspot.com/2011/03/amazon-s3-api-for-plsql.html
   * http://jastraub.blogspot.com/2011/01/building-amazon-s3-client-with.html
   * AMAZON_AWS_AUTH_PKG
   * AMAZON_AWS_S3_PKG
 
-##Integrate with PayPal web services
+## Integrate with PayPal web services
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/3/39/PayPal_logo.svg/200px-PayPal_logo.svg.png" align="right" /><br>
 
   * PAYPAL_UTIL_PKG
 
-##Integrate with Twitter using PL/SQL
+## Integrate with Twitter using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/en/9/9f/Twitter_bird_logo_2012.svg" width="100" align="right" /><br>
 
   * http://oratweet.com/
 
-##Call SOAP and REST web services using PL/SQL
+## Call SOAP and REST web services using PL/SQL
 
   * http://jastraub.blogspot.com/2008/06/flexible-web-service-api.html
   * https://flex-ws-api.samplecode.oracle.com/
@@ -151,44 +154,44 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * T_SOAP_ENVELOPE
 
 
-##Publish SOAP web service using PL/SQL
+## Publish SOAP web service using PL/SQL
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/5/59/SOAP.svg/182px-SOAP.svg.png" align="right" /><br>
 
   * http://ora-00001.blogspot.com/2011/01/soap-server-in-plsql.html
   * SOAP_SERVER_PKG
 
-##Publish REST web services using PL/SQL
+## Publish REST web services using PL/SQL
 
   * http://ora-00001.blogspot.com/2009/07/creating-rest-web-service-with-plsql.html
   * http://www.oracle-base.com/articles/misc/XMLOverHTTP.php
 
-##Regular expressions using PL/SQL
+## Regular expressions using PL/SQL
 
 <img src="http://upload.wikimedia.org/math/2/a/8/2a8ea57cab60c6ac9279fbf68e37ba0d.png" align="right" /><br>
 
   * REGEXP_UTIL_PKG
 
 
-##String, date and math utilities
+## String, date and math utilities
 
   * DATE_UTIL_PKG
   * MATH_UTIL_PKG
   * STRING_UTIL_PKG
 
-##Encoding and data type utilities
+## Encoding and data type utilities
 
   * ENCODE_UTIL_PKG
   * RAW_UTIL_PKG
 
-##SQL utilities
+## SQL utilities
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/SQL_ANATOMY_wiki.svg/275px-SQL_ANATOMY_wiki.svg.png" align="right" /><br>
 
   * SQL_BUILDER_PKG
   * SQL_UTIL_PKG
 
-##XML utilities
+## XML utilities
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/6/68/XML.svg/125px-XML.svg.png" align="right" /><br>
 
@@ -198,38 +201,38 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * XML_STYLESHEET_PKG
   * XML_UTIL_PKG
 
-##File utilities
+## File utilities
 
   * FILE_UTIL_PKG
 
-##HTTP utilities
+## HTTP utilities
 
   * HTTP_UTIL_PKG
 
-##Encryption and security utilities and protocols
+## Encryption and security utilities and protocols
 
   * http://ora-00001.blogspot.com/2011/08/ntlm-for-plsql.html
   * CRYPTO_UTIL_PKG
   * NTLM_UTIL_PKG
   * NTLM_HTTP_PKG
 
-##Logging and debugging utilities
+## Logging and debugging utilities
 
   * https://github.com/tmuth/Logger---A-PL-SQL-Logging-Utility
   * http://sourceforge.net/projects/log4plsql/
   * http://sourceforge.net/projects/ilo/
   * DEBUG_PKG
 
-##Generating test data and random bits using PL/SQL
+## Generating test data and random bits using PL/SQL
 
   * http://ora-00001.blogspot.com/2011/02/generating-test-data-using-plsql.html
   * RANDOM_UTIL_PKG
 
-##PL/SQL Web Toolkit (OWA) utilities
+## PL/SQL Web Toolkit (OWA) utilities
 
   * OWA_UTIL_PKG
 
-##Web Gateways for PL/SQL
+## Web Gateways for PL/SQL
 
   * http://download.oracle.com/docs/cd/B19306_01/appdev.102/b14258/d_epg.htm
   * http://download.oracle.com/docs/cd/B14099_19/web.1012/b14010/toc.htm
@@ -238,40 +241,40 @@ This library is a collection of various utility packages for PL/SQL, as well as 
   * http://sourceforge.net/projects/dbprism/
   * http://oss.oracle.com/projects/mod_owa/dist/documentation/modowa.htm
 
-##jQGrid Integration Kit for PL/SQL and Apex
+## jQGrid Integration Kit for PL/SQL and Apex
 
   * http://ora-00001.blogspot.com/2010/03/jqgrid-integration-kit-for-plsql-and.html
   * http://code.google.com/p/jqgrid-for-plsql/
 
-##Application Express APIs
+## Application Express APIs
 
   * http://download.oracle.com/docs/cd/E17556_01/doc/apirefs.40/e15519/toc.htm
   * APEX_UTIL_PKG
 
-##Miscellaneous utilities and demos
+## Miscellaneous utilities and demos
 
   * http://www.oracle.com/webfolder/technetwork/tutorials/plsql/sfdemo.zip
   * http://www.toadworld.com/platforms/oracle/w/wiki/8243.plsql-obsession
 
-##PL/SQL Frameworks
+## PL/SQL Frameworks
 
   * http://sourceforge.net/projects/plsqlframestart/
   * http://www.toadworld.com/Freeware/PLVisionFreeware/tabid/687/Default.aspx
 
-##PL/SQL Wrappers for Java
+## PL/SQL Wrappers for Java
 
   * http://sourceforge.net/projects/oracle-jutils/
 
-##Unit Testing Frameworks for PL/SQL
+## Unit Testing Frameworks for PL/SQL
 
-  * https://utplsql.github.io/ (version 3 beta)
+  * https://utplsql.github.io/
   * http://code.google.com/p/pluto-test-framework/
 
-##Documentation Generators (JavaDoc-style)
+## Documentation Generators (JavaDoc-style)
 
   * http://sourceforge.net/projects/plsqlutils/
   * http://www.thatjeffsmith.com/archive/2012/03/javadoc-for-the-database-a-la-dbdoc-via-sql-developer/
 
-##Scripting, deployment and installation utilities
+## Scripting, deployment and installation utilities
 
   * http://code.google.com/p/oracle-ddl2svn/

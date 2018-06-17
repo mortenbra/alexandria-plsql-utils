@@ -35,6 +35,7 @@ create synonym ax_random for random_util_pkg;
 create synonym ax_raw for raw_util_pkg;
 create synonym ax_regexp for regexp_util_pkg;
 create synonym ax_rss for rss_util_pkg;
+create synonym ax_slack for slack_util_pkg;
 create synonym ax_sms for sms_util_pkg;
 create synonym ax_sql_builder for sql_builder_pkg;
 create synonym ax_sql for sql_util_pkg;
