@@ -1,5 +1,5 @@
 create or replace package xlsx_builder_pkg
-as
+authid current_user as
 /**********************************************
 **
 ** Author: Anton Scheffer
