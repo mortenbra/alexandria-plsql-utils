@@ -1694,7 +1694,7 @@ ts timestamp := systimestamp;
       t_xxx := t_xxx || '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>';
       if workbook.sheets( s ).comments.count() > 0
       then
-        t_xxx := t_xxx || '<legacyDrawing r:id="rId' || ( workbook.sheets( s ).hyperlinks.count() + 1 ) || '"/>';
+        t_xxx := t_xxx || '<legacyDrawing r:id="rId' || to_char( workbook.sheets( s ).hyperlinks.count() + 1 ) || '"/>';
       end if;
 --
       t_xxx := t_xxx || '</worksheet>';
