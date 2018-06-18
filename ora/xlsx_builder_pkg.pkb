@@ -1624,9 +1624,9 @@ ts timestamp := systimestamp;
       loop
         t_xxx := t_xxx || '<autoFilter ref="' ||
             alfan_col( nvl( workbook.sheets( s ).autofilters( a ).column_start, t_col_min ) ) ||
-            nvl( workbook.sheets( s ).autofilters( a ).row_start, workbook.sheets( s ).rows.first() ) || ':' ||
+            to_char( nvl( workbook.sheets( s ).autofilters( a ).row_start, workbook.sheets( s ).rows.first() )) || ':' ||
             alfan_col( coalesce( workbook.sheets( s ).autofilters( a ).column_end, workbook.sheets( s ).autofilters( a ).column_start, t_col_max ) ) ||
-            nvl( workbook.sheets( s ).autofilters( a ).row_end, workbook.sheets( s ).rows.last() ) || '"/>';
+            to_char( nvl( workbook.sheets( s ).autofilters( a ).row_end, workbook.sheets( s ).rows.last() )) || '"/>';
       end loop;
       if workbook.sheets( s ).mergecells.count() > 0
       then
@@ -1694,7 +1694,7 @@ ts timestamp := systimestamp;
       t_xxx := t_xxx || '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>';
       if workbook.sheets( s ).comments.count() > 0
       then
-        t_xxx := t_xxx || '<legacyDrawing r:id="rId' || ( workbook.sheets( s ).hyperlinks.count() + 1 ) || '"/>';
+        t_xxx := t_xxx || '<legacyDrawing r:id="rId' || to_char( workbook.sheets( s ).hyperlinks.count() + 1 ) || '"/>';
       end if;
 --
       t_xxx := t_xxx || '</worksheet>';
