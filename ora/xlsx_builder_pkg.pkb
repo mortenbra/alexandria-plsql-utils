@@ -1,5 +1,5 @@
 CREATE OR REPLACE package body xlsx_builder_pkg
-as
+as 
 --
   c_LOCAL_FILE_HEADER        constant raw(4) := hextoraw( '504B0304' ); -- Local file header signature
   c_END_OF_CENTRAL_DIRECTORY constant raw(4) := hextoraw( '504B0506' ); -- End of central directory signature
@@ -1949,6 +1949,7 @@ style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:' || to_char
       then
         dbms_sql.close_cursor( t_c );
       end if;
+    raise;
   end;
 end xlsx_builder_pkg;
 /
