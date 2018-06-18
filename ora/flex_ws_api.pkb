@@ -260,6 +260,7 @@ is
     l_hdr_value     varchar2(1024);
     l_hdr           header;
     l_hdrs          header_table;
+    l_returnvalue   xmltype;
 begin
 
     -- determine database characterset, if not AL32UTF8, conversion will be necessary
@@ -389,13 +390,17 @@ begin
     end;
 
     utl_http.end_response(l_http_resp);
+    
+    begin
+        l_returnvalue := xmltype.createxml( l_clob );
+    exception when others then
+        if sqlcode = -31011 then -- invalid xml
+            raise_application_error( -20001, 'HTTP response could not be converted to XML. Response was (first 1000 characters): ' || dbms_lob.substr( l_clob, 1000 ));
+        end if;
+    end;
+    dbms_lob.freetemporary( l_clob );
 
-    return xmltype.createxml(l_clob);
-
-exception when others then
-    if sqlcode = -31011 then -- its not xml
-        return null;
-    end if;
+    return l_returnvalue;
 end make_request;
 
 function make_rest_request(
