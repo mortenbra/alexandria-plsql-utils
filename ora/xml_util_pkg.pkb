@@ -303,11 +303,14 @@ begin
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     07.12.2010  Created
+  JMW     12.04.2018  Changed the use of XMLType.extract(xpath).getStringVal()
+                       to EXTRACTVALUE(XMLType, xpath) so that special characters
+                       are not escaped
   
   */
   
   begin
-    select xmltype(p_tag).extract('//@' || p_attr_name).getstringval()
+    select extractvalue( xmltype(p_tag), '//@' || p_attr_name )
     into l_returnvalue
     from dual;
   exception
@@ -339,11 +342,16 @@ begin
   Who     Date        Description
   ------  ----------  --------------------------------
   MBR     27.01.2011  Created
+  JMW     12.04.2018  Changed the use of XMLType.extract(xpath).getStringVal()
+                       to EXTRACTVALUE(XMLType, xpath) so that special characters
+                       are not escaped
  
   */
 
   begin 
-    l_returnvalue := p_xml.extract(p_xpath, p_namespace).getstringval();
+    select extractvalue( p_xml, p_xpath, p_namespace )
+    into l_returnvalue
+    from dual;
   exception
     when others then
       l_returnvalue := p_default_value;
@@ -372,14 +380,21 @@ begin
   Who     Date        Description
   ------  ----------  --------------------------------
   MBR     27.01.2011  Created
+  JMW     12.04.2018  Changed the use of XMLType.extract(xpath).getStringVal()
+                       to EXTRACTVALUE(XMLType, xpath) so that special characters
+                       are not escaped
  
   */
  
   begin 
     if p_date_format is not null then
-      l_returnvalue := to_date(p_xml.extract(p_xpath, p_namespace).getstringval(), p_date_format);
+      select to_date( extractvalue( p_xml, p_xpath, p_namespace ), p_date_format )
+      into l_returnvalue
+      from dual;
     else
-      l_returnvalue := to_date(substr(p_xml.extract(p_xpath, p_namespace).getstringval(), 1, 19), 'YYYY-MM-DD"T"hh24:mi:ss');
+      select to_date( substr( extractvalue( p_xml, p_xpath, p_namespace ), 1, 19 ), 'YYYY-MM-DD"T"hh24:mi:ss' )
+      into l_returnvalue
+      from dual;
     end if;
   exception
     when others then
@@ -408,11 +423,16 @@ begin
   Who     Date        Description
   ------  ----------  --------------------------------
   MBR     27.01.2011  Created
+  JMW     12.04.2018  Changed the use of XMLType.extract(xpath).getStringVal()
+                       to EXTRACTVALUE(XMLType, xpath) so that special characters
+                       are not escaped
  
   */
  
   begin 
-    l_returnvalue := to_number(p_xml.extract(p_xpath, p_namespace).getstringval());
+    select to_number( extractvalue( p_xml, p_xpath, p_namespace ) )
+    into l_returnvalue
+    from dual;
   exception
     when others then
       l_returnvalue := p_default_value;
