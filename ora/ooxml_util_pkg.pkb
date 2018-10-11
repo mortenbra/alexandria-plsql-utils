@@ -73,6 +73,8 @@ begin
     Who     Date        Description 
     ------  ----------  -------------------------------- 
     JMW     02.03.2016  Created 
+    JMW     31.03.2017  Added a 'state' attribute to t_xlsx_sheet_properties
+    JMW     12.04.2018  Removed the ORDER BY clause
     
     */ 
     
@@ -87,9 +89,9 @@ begin
                     columns
                         r_id varchar2(255) path '@r:id',
                         sheetid number path '@sheetId',
-                        name varchar2(31) path '@name' ) xml
-    where xml.r_id is not null
-    order by xml.sheetid;
+                        name varchar2(31) path '@name',
+                        state varchar2(10) path '@state' ) xml
+    where xml.r_id is not null;
     
     return l_returnvalue;
     
