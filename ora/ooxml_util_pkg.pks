@@ -13,6 +13,7 @@ as
   ------  ----------  --------------------------------
   MBR     25.01.2011  Created
   MBR     11.07.2011  Added Powerpoint-specific features
+  JMW     31.03.2017  Added a 'state' attribute to t_xlsx_sheet_properties
  
   */
   
@@ -81,7 +82,8 @@ as
   type t_xlsx_sheet_attributes is record (
       r_id    varchar2(255),
       sheetid number,
-      name    varchar2(31)
+      name    varchar2(31),
+      state   varchar2(10)
   );
   
   type t_xlsx_sheet_properties is table of t_xlsx_sheet_attributes index by pls_integer;
