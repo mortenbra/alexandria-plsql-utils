@@ -6,7 +6,7 @@ as
   Purpose:      Package handles the iCalendar protocol (RFC 5545)
  
   Remarks:      see http://en.wikipedia.org/wiki/ICalendar and http://tools.ietf.org/html/rfc5545
-  
+   
   Who     Date        Description
   ------  ----------  --------------------------------
   MBR     26.10.2012  Created
@@ -21,13 +21,20 @@ as
     location        varchar2(2000),
     organizer_name  varchar2(2000),
     organizer_email varchar2(2000),
+    status          varchar2(2000),
     uid             varchar2(2000)
   );
  
+  -- set prodid (company/product name)
+  procedure set_prodid (p_prodid in varchar2);
  
-  -- get event
-  function get_event (p_event in t_event) return varchar2;
+  -- get event string
+  function get_event_str (p_event in t_event) return varchar2;
  
+  -- download event string
+  procedure download_event_str (p_event_str in varchar2,
+                                p_filename in varchar2 := null);
+
   -- download event
   procedure download_event (p_event in t_event);
 
