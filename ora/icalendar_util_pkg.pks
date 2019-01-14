@@ -46,6 +46,7 @@ as
                          p_location in varchar2 := null,
                          p_organizer_name in varchar2 := null,
                          p_organizer_email in varchar2 := null,
+                         p_status in varchar2 := null,
                          p_uid in varchar2 := null) return t_event;
  
 end icalendar_util_pkg;

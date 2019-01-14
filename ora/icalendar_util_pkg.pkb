@@ -181,6 +181,7 @@ begin
  
 end get_event_str;
 
+
 procedure download_event_str (p_event_str in varchar2,
                               p_filename in varchar2 := null)
 as
@@ -238,6 +239,7 @@ function create_event (p_start_date in date,
                        p_location in varchar2 := null,
                        p_organizer_name in varchar2 := null,
                        p_organizer_email in varchar2 := null,
+                       p_status in varchar2 := null,
                        p_uid in varchar2 := null) return t_event
 as
   l_returnvalue t_event;
@@ -262,6 +264,7 @@ begin
   l_returnvalue.location := p_location;
   l_returnvalue.organizer_name := p_organizer_name;
   l_returnvalue.organizer_email := p_organizer_email;
+  l_returnvalue.status := p_status;
   l_returnvalue.uid := p_uid;
  
   return l_returnvalue;
