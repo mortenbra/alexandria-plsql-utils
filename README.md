@@ -92,9 +92,8 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 
 <img src="http://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Arobaze.svg/75px-Arobaze.svg.png" align="right" /><br>
 
-  * http://www.oracle.com/technology/sample_code/tech/pl_sql/htdocs/Utl_Smtp_Sample.html
-  * http://download.oracle.com/docs/cd/E10513_01/doc/apirefs.310/e12855/apex_mail.htm
-  * MAIL_UTIL_PKG
+  * https://oracle-base.com/articles/misc/email-from-oracle-plsql
+  * https://docs.oracle.com/en/database/oracle/application-express/19.1/aeapi/APEX_MAIL.html
 
 
 ## Receive email (POP3) using PL/SQL
