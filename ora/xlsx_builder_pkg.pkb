@@ -664,9 +664,15 @@ as
   is
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := p_value;
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := null;
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := get_XfId( t_sheet, p_col, p_row, p_numFmtId, p_fontId, p_fillId, p_borderId, p_alignment );
+    if p_value is not null
+    then
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := p_value;
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := null;
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := get_XfId( t_sheet, p_col, p_row, p_numFmtId, p_fontId, p_fillId, p_borderId, p_alignment );
+    elsif workbook.sheets( t_sheet ).rows( p_row ).exists( p_col ) 
+    then
+        workbook.sheets( t_sheet ).rows( p_row ).delete( p_col );
+    end if;
   end;
 --
   function add_string( p_string varchar2 )
@@ -686,6 +692,19 @@ as
     return t_cnt;
   end;
 --
+  function clean_string (p_string in varchar2)
+  return varchar2
+  is
+    invalid_ascii constant varchar2(32) :=
+      chr(00)||chr(01)||chr(02)||chr(03)||chr(04)||chr(05)||chr(06)||chr(07)||
+      chr(08)||                  chr(11)||chr(12)||         chr(14)||chr(15)||
+      chr(16)||chr(17)||chr(18)||chr(19)||chr(20)||chr(21)||chr(22)||chr(23)||
+      chr(24)||chr(25)||chr(26)||chr(27)||chr(28)||chr(29)||chr(30)||chr(31)
+    ;
+  begin
+    return translate(translate( p_string, invalid_ascii, chr(1)), chr(0)||chr(1), ' ');
+  end;
+--
   procedure cell
     ( p_col pls_integer
     , p_row pls_integer
@@ -701,12 +720,18 @@ as
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
     t_alignment tp_alignment := p_alignment;
   begin
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( p_value );
-    if t_alignment.wrapText is null and instr( p_value, chr(13) ) > 0
+    if p_value is not null 
     then
-      t_alignment.wrapText := true;
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( clean_string( p_value ));
+      if t_alignment.wrapText is null and instr( p_value, chr(13) ) > 0
+      then
+        t_alignment.wrapText := true;
+      end if;
+        workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, p_numFmtId, p_fontId, p_fillId, p_borderId, t_alignment );
+    elsif workbook.sheets( t_sheet ).rows( p_row ).exists( p_col )
+    then
+      workbook.sheets( t_sheet ).rows( p_row ).delete( p_col );
     end if;
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, p_numFmtId, p_fontId, p_fillId, p_borderId, t_alignment );
   end;
 --
   procedure cell
@@ -749,11 +774,17 @@ as
     t_ind pls_integer;
     t_sheet pls_integer := nvl( p_sheet, workbook.sheets.count() );
   begin
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( nvl( p_value, p_url ) );
-    workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, '', get_font( 'Calibri', p_theme => 10, p_underline => true ) );
-    t_ind := workbook.sheets( t_sheet ).hyperlinks.count() + 1;
-    workbook.sheets( t_sheet ).hyperlinks( t_ind ).cell := alfan_col( p_col ) || p_row;
-    workbook.sheets( t_sheet ).hyperlinks( t_ind ).url := p_url;
+    if nvl( p_value, p_url ) is not null
+    then
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).value := add_string( clean_string( nvl( p_value, p_url )));
+      workbook.sheets( t_sheet ).rows( p_row )( p_col ).style := 't="s" ' || get_XfId( t_sheet, p_col, p_row, '', get_font( 'Calibri', p_theme => 10, p_underline => true ) );
+      t_ind := workbook.sheets( t_sheet ).hyperlinks.count() + 1;
+      workbook.sheets( t_sheet ).hyperlinks( t_ind ).cell := alfan_col( p_col ) || p_row;
+      workbook.sheets( t_sheet ).hyperlinks( t_ind ).url := p_url;
+    elsif workbook.sheets( t_sheet ).rows( p_row ).exists( p_col )
+    then
+      workbook.sheets( t_sheet ).rows( p_row ).delete( p_col );
+    end if;
   end;
 --
   procedure comment
