@@ -236,6 +236,56 @@ begin
 end get_token_count;
 
 
+function pad_str_num (p_text in varchar2,
+                      p_pad_size in number := 10,
+                      p_decimal_separator in varchar2 := '.') return varchar2 deterministic
+as
+  l_counter number;
+  l_returnvalue varchar2(4000) := null;
+  l_number_length number := 0;
+  l_current_char varchar2(1);
+begin
+
+  /*
+
+  Purpose:    pad numbers within a string to the specified length
+
+  Remarks:  
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  AJM     13.07.2016  Created
+
+  */
+
+
+  if p_text is not null then
+    l_returnvalue := p_text;
+
+    for l_counter in reverse 1..length (p_text) loop
+      l_current_char := substr (p_text, l_counter, 1);
+
+      if regexp_instr (l_current_char, '[0-9]') <> 0 then
+        l_number_length := l_number_length + 1;
+      else
+        if l_number_length > 0 and l_current_char <> p_decimal_separator then
+          l_returnvalue := substr (l_returnvalue, 1, l_counter) || lpad ('0', p_pad_size - l_number_length, '0') || substr (l_returnvalue, l_counter + 1, length (l_returnvalue));
+        end if;
+
+        l_number_length := 0;
+      end if;
+    end loop;
+
+    if l_number_length > 0 then
+      l_returnvalue := lpad ('0', p_pad_size - l_number_length, '0') || l_returnvalue;
+    end if;
+
+  end if;
+
+  return l_returnvalue;
+end pad_str_num;
+
+
 function str_to_num (p_str in varchar2,
                      p_decimal_separator in varchar2 := null,
                      p_thousand_separator in varchar2 := null,
