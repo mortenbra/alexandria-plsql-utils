@@ -674,5 +674,30 @@ begin
 
 end get_date_tab;
 
+
+function fmt_day (p_date in date) return varchar2
+as
+  l_returnvalue     string_util_pkg.t_max_pl_varchar2;
+begin
+/*
+
+  Purpose:    format date as day of the week .eg. monday
+
+  Remarks:     
+
+  Who     Date        Description
+  ------  ----------  -------------------------------------
+  NN      09.01.2017  Created
+  
+
+  */
+  
+  l_returnvalue := to_char(p_date, g_date_fmt_day);
+
+  return l_returnvalue;
+  
+end fmt_day;
+
+
 end date_util_pkg;
 /
