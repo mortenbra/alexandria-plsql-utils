@@ -1,0 +1,1 @@
+create table emp (id number, name varchar2(50));
