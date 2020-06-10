@@ -238,7 +238,7 @@ as
       loop
         t_ind := dbms_lob.instr( t_rv, tab_raw( i ), t_ind + 2 );
         exit when t_ind <= 0;
-        dbms_lob.copy( t_rv, t_rv, dbms_lob.lobmaxsize, t_ind + 1, t_ind );
+        dbms_lob.copy( t_rv, t_rv, dbms_lob.getlength(t_rv) - t_ind + 1, t_ind + 1, t_ind );
         dbms_lob.copy( t_rv, tab_raw( 1 ), 1, t_ind, 1 );
       end loop;
     end loop;
@@ -1358,4 +1358,3 @@ as
 --
 end pdf_builder_pkg;
 /
-
