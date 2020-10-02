@@ -277,3 +277,5 @@ This library is a collection of various utility packages for PL/SQL, as well as 
 ## Scripting, deployment and installation utilities
 
   * http://code.google.com/p/oracle-ddl2svn/
+  
+  Add some practical tutorial with steps 
