@@ -80,7 +80,7 @@ begin
     
     l_xml := get_xml( p_xlsx, 'xl/workbook.xml' );
     
-    select xml.r_id, xml.sheetid, xml.name
+    select xml.r_id, xml.sheetid, xml.name, xml.state
         bulk collect into l_returnvalue
       from xmltable( xmlnamespaces( default 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
                          'http://schemas.openxmlformats.org/officeDocument/2006/relationships' AS "r" ),
