@@ -1,4 +1,3 @@
---
 -- Copyright (c) Oracle Corporation 1999. All Rights Reserved.
 --
 -- NAME
@@ -12,9 +11,7 @@
 --
 -- USAGE
 -- SQL> START demobld.sql
---
--- 
-
+ 
 SET TERMOUT ON
 PROMPT Building demonstration tables. Please wait.
 SET TERMOUT OFF
