@@ -349,6 +349,7 @@ is
     t_now date;
     t_blob blob;
     t_clen integer;
+    t_name raw(32767);
   begin
     t_now := sysdate;
     t_blob := utl_compress.lz_compress( p_content );
@@ -359,12 +360,16 @@ is
                               , true
                               );
     end if;
+    t_name := utl_raw.cast_to_raw(convert(p_name, 'AL32UTF8'));
     dbms_lob.append
       ( p_zipped_blob
       , utl_raw.concat
           ( hextoraw( '504B0304' )              -- Local file header signature
           , hextoraw( '1400' )                  -- version 2.0
-          , hextoraw( '0000' )                  -- no General purpose bits
+          , case when convert(p_name, 'AL32UTF8') = convert(p_name, 'US8PC437')
+              then hextoraw( '0000' ) -- no General purpose bits
+              else hextoraw( '0008' ) -- set Language encoding flag (EFS)
+            end
           , hextoraw( '0800' )                  -- deflate
           , little_endian
               (   to_number( to_char( t_now
@@ -397,11 +402,11 @@ is
           , little_endian( t_clen - 18 )                    -- compressed size
           , little_endian( dbms_lob.getlength( p_content ) )
                                                           -- uncompressed size
-          , little_endian( length( p_name )
+          , little_endian(  utl_raw.length( t_name )
                          , 2
                          )                                 -- File name length
           , hextoraw( '0000' )                           -- Extra field length
-          , utl_raw.cast_to_raw( p_name )                         -- File name
+          , t_name                         -- File name
           )
       );
     dbms_lob.copy( p_zipped_blob
