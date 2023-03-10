@@ -10,6 +10,7 @@ as
   Who     Date        Description
   ------  ----------  -------------------------------------
   MBR     21.05.2012  Added to Alexandria Library because this is a prerequisite for the EWS (MS Exchange Web Service) API
+  Gergely Filep 10.03.2023 Make_request bugfix : if body size is larger then 32767 the utl_raw.convert function truncates the input
   
   */
 
@@ -99,12 +100,12 @@ begin
 
     -- determine length for content-length header
     loop
-        exit when wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767) is null;
+        exit when wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000) is null;
         if l_db_charset = 'AL32UTF8' then
-            l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767));
+            l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000));
         else
             l_env_lenb := l_env_lenb + utl_raw.length(
-                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767)),
+                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000)),
                         'american_america.al32utf8','american_america.'||l_db_charset));
         end if;
         i := i + 1;
@@ -268,12 +269,12 @@ begin
 
     -- determine length for content-length header
     loop
-        exit when wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767) is null;
+        exit when wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000) is null;
         if l_db_charset = 'AL32UTF8' then
-            l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767));
+            l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000));
         else
             l_env_lenb := l_env_lenb + utl_raw.length(
-                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*32767)),
+                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(p_envelope,i*8000)),
                         'american_america.al32utf8','american_america.'||l_db_charset));
         end if;
         i := i + 1;
@@ -486,12 +487,12 @@ begin
         l_env_lenb := dbms_lob.getlength(p_body_blob);
     else
         loop
-            exit when wwv_flow_utilities.clob_to_varchar2(l_body,i*32767) is null;
+            exit when wwv_flow_utilities.clob_to_varchar2(l_body,i*8000) is null;
             if l_db_charset = 'AL32UTF8' then
-                l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(l_body,i*32767));
+                l_env_lenb := l_env_lenb + lengthb(wwv_flow_utilities.clob_to_varchar2(l_body,i*8000));
             else
                 l_env_lenb := l_env_lenb + utl_raw.length(
-                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(l_body,i*32767)),
+                    utl_raw.convert(utl_raw.cast_to_raw(wwv_flow_utilities.clob_to_varchar2(l_body,i*8000)),
                         'american_america.al32utf8','american_america.' || l_db_charset));
             end if;
             i := i + 1;
